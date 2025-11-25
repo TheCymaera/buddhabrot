@@ -1,0 +1,38 @@
+{
+	"exclude": [
+		"node_modules",
+		"dist",
+	],
+	"compilerOptions": {
+		"module": "NodeNext",
+		"target": "ESNext",
+
+		"moduleResolution": "nodenext",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		
+		"strict": true,
+		"strictBindCallApply": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization": true,
+		"strictNullChecks": true,
+		"noImplicitThis": true,
+		"noImplicitReturns": true,
+		"noUncheckedIndexedAccess": true,
+		"alwaysStrict": true,
+		"forceConsistentCasingInFileNames": true,
+
+		"verbatimModuleSyntax": true,
+
+		"preserveConstEnums": true,
+		"removeComments": true,
+		"sourceMap": true,
+		"inlineSources": false,
+
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": ["vite/client", "svelte", "@webgpu/types"],
+		
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+	}
+}
