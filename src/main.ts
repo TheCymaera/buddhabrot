@@ -1,17 +1,18 @@
 import './main.css';
 import COMPUTE_SHADER from './shaders/compute.wgsl?raw';
 import RENDER_SHADER from './shaders/render.wgsl?raw';
+import { Struct } from './struct.js';
 
 // config
-const SAMPLES = 2 ** 16;
+const SAMPLES = 2 ** 12;
 const MAX_ITERATIONS = 1000 * 3;
-const MIN_ITERATIONS = 20;
+const MIN_ITERATIONS = 0;
 const ESCAPE_RADIUS = 4;
 const SAMPLE_MIN = { x: -2, y: -1.5 };
 const SAMPLE_MAX = { x:  1, y:  1.5 };
 const VIEW_Y_WIDTH = SAMPLE_MAX.y - SAMPLE_MIN.y;
 const VIEW_CENTER = { x: -.5, y: 0 };
-let SEED = 123456;
+const SEED = () => performance.now();
 const GAMMA = 4.0;
 
 const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
@@ -66,7 +67,7 @@ let computeBindGroup: GPUBindGroup;
 let renderBindGroup: GPUBindGroup;
 
 function createHistogramBuffer(width: number, height: number) {
-	const elementCount = width * height || 1;
+	const elementCount = (width * height) + 1; // extra slot for max value
 	const buffer = device.createBuffer({
 		size: elementCount * Uint32Array.BYTES_PER_ELEMENT,
 		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
@@ -79,6 +80,7 @@ function createHistogramBuffer(width: number, height: number) {
 
 function createBindGroup(pipeline: GPUComputePipeline | GPURenderPipeline) {
 	return device.createBindGroup({
+		label: pipeline instanceof GPUComputePipeline ? 'compute bind group' : 'render bind group',
 		layout: pipeline.getBindGroupLayout(0),
 		entries: [
 			{ binding: 0, resource: { buffer: histogramBuffer } },
@@ -133,55 +135,57 @@ function render() {
 };
 
 
-// configure and render
+// configure
 context.configure({ device, format, alphaMode: 'opaque' });
 
-new ResizeObserver(debounce(() => {
-	updateCanvasSize();
-	render();
-}, 50)).observe(canvas);
+// handle resize
+{
+	let init = false;
+	new ResizeObserver(() => {
+		if (!init) {
+			init = true;
+			return;
+		}
 
-//function loop() {
-//	SEED += 1;
-//	render();
-//	requestAnimationFrame(loop);
-//}
-//requestAnimationFrame(loop);
+		updateCanvasSize();
+		render();
+	}).observe(canvas);
+}
+
+// main loop
+function loop() {
+	render();
+	requestAnimationFrame(loop);
+}
+updateCanvasSize();
+requestAnimationFrame(loop);
 
 function getUniformData() {
-	const uniformData = new Float32Array(16);
-	
-	uniformData[0] = canvas.width;
-	uniformData[1] = canvas.height;
-	uniformData[2] = SAMPLES_PER_THREAD;
-	uniformData[3] = MIN_ITERATIONS
-
-	uniformData[4] = MAX_ITERATIONS;
-	uniformData[5] = SEED;
-	uniformData[6] = SAMPLE_MIN.x;
-	uniformData[7] = SAMPLE_MIN.y;
-
-	uniformData[8] = SAMPLE_MAX.x;
-	uniformData[9] = SAMPLE_MAX.y;
-	uniformData[10] = VIEW_CENTER.x;
-	uniformData[11] =VIEW_CENTER.y ;
-
-	uniformData[12] = VIEW_Y_WIDTH;
-	uniformData[13] = (canvas.width / Math.max(canvas.height, 1));
-	uniformData[14] = ESCAPE_RADIUS ** 2;
-	uniformData[15] = GAMMA;
-
-	return uniformData;
+	return new Struct()
+		.vec2_u32([canvas.width, canvas.height])
+		.u32(SAMPLES_PER_THREAD)
+		.u32(MIN_ITERATIONS)
+		.u32(MAX_ITERATIONS)
+		.u32(SEED())
+		.vec2_f32([SAMPLE_MIN.x, SAMPLE_MIN.y])
+		.vec2_f32([SAMPLE_MAX.x, SAMPLE_MAX.y])
+		.vec2_f32([VIEW_CENTER.x, VIEW_CENTER.y])
+		.f32(VIEW_Y_WIDTH)
+		.f32(canvas.width / Math.max(canvas.height, 1))
+		.f32(ESCAPE_RADIUS ** 2)
+		.f32(GAMMA)
+		.u32(WORKGROUP_COUNT)
+		.pack();
 }
 
-function debounce<F extends (...args: any[]) => void>(fn: F, delay: number): F {
-	let timeoutId: number | undefined;
-	return function(this: any, ...args: any[]) {
-		if (timeoutId !== undefined) {
-			clearTimeout(timeoutId);
-		}
-		timeoutId = window.setTimeout(() => {
-			fn.apply(this, args);
-		}, delay);
-	} as F;
-}
+//function debounce<F extends (...args: any[]) => void>(fn: F, delay: number): F {
+//	let timeoutId: number | undefined;
+//	return function(this: any, ...args: any[]) {
+//		if (timeoutId !== undefined) {
+//			clearTimeout(timeoutId);
+//		}
+//		timeoutId = window.setTimeout(() => {
+//			fn.apply(this, args);
+//		}, delay);
+//	} as F;
+//}

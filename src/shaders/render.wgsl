@@ -1,21 +1,22 @@
 
 struct Params {
-	v0 : vec4<f32>,
-	v1 : vec4<f32>,
-	v2 : vec4<f32>,
-	v3 : vec4<f32>,
+	resolution : vec2<u32>,
+	samples_per_thread : u32,
+	min_iterations : u32,
+	max_iterations : u32,
+	seed : u32,
+	sample_min : vec2<f32>,
+	sample_max : vec2<f32>,
+	view_center : vec2<f32>,
+	view_y_width : f32,
+	view_aspect_ratio : f32,
+	escape_radius_sq : f32,
+	gamma : f32,
+	workgroup_count : u32,
 };
 
 @group(0) @binding(0) var<storage, read> histogram : array<u32>;
 @group(0) @binding(1) var<uniform> params : Params;
-
-fn resolution() -> vec2<u32> {
-	return vec2<u32>(u32(params.v0.x), u32(params.v0.y));
-}
-
-fn gamma() -> f32 {
-	return params.v3.w;
-}
 
 struct VSOut {
 	@builtin(position) position : vec4<f32>,
@@ -43,7 +44,7 @@ fn vs_main(@builtin(vertex_index) vid : u32) -> VSOut {
 
 @fragment
 fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
-	let res = resolution();
+	let res = params.resolution;
 	
 	let uv = in.uv;
 
@@ -53,11 +54,12 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 	let index = y * res.x + x;
 
 	let value = f32(histogram[index]);
-	let max_value = 1000.0;
+	let max_index = res.x * res.y;
+	let max_value = max(f32(histogram[max_index]), 1.0);
 
 	let t = clamp(value / max_value, 0.0, 1.0);
 
-	let eased = 1 - pow(1.0 - t, gamma());
+	let eased = 1 - pow(1.0 - t, params.gamma);
 
 	let color_base = vec4<f32>(166, 222, 255, 255) / 255.0;
 
