@@ -17,18 +17,6 @@ fn gamma() -> f32 {
 	return params.v3.w;
 }
 
-fn max_value() -> u32 {
-	let res = resolution();
-	var max_val = 0u;
-	let max_index = res.x * res.y;
-	for (var i = 0u; i < max_index; i++) {
-		if (histogram[i] > max_val) {
-			max_val = histogram[i];
-		}
-	}
-	return max_val;
-}
-
 struct VSOut {
 	@builtin(position) position : vec4<f32>,
 	@location(0) uv : vec2<f32>,
@@ -65,10 +53,7 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 	let index = y * res.x + x;
 
 	let value = f32(histogram[index]);
-	//let max_value = 1000.0;
-	let max_value = f32(max_value());
-
-
+	let max_value = 1000.0;
 
 	let t = clamp(value / max_value, 0.0, 1.0);
 

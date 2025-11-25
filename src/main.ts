@@ -3,17 +3,21 @@ import COMPUTE_SHADER from './shaders/compute.wgsl?raw';
 import RENDER_SHADER from './shaders/render.wgsl?raw';
 
 // config
-const WORKGROUP_COUNT = 256;
-const SAMPLES_PER_THREAD = 2 ** 10;
-const MAX_ITERATIONS = 1000 * 5;
+const SAMPLES = 2 ** 16;
+const MAX_ITERATIONS = 1000 * 3;
 const MIN_ITERATIONS = 20;
 const ESCAPE_RADIUS = 4;
 const SAMPLE_MIN = { x: -2, y: -1.5 };
 const SAMPLE_MAX = { x:  1, y:  1.5 };
 const VIEW_Y_WIDTH = SAMPLE_MAX.y - SAMPLE_MIN.y;
 const VIEW_CENTER = { x: -.5, y: 0 };
-const SEED = 123456;
+let SEED = 123456;
 const GAMMA = 4.0;
+
+const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
+if (!isFinite(WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from compute shader.');
+const WORKGROUP_COUNT = Math.ceil(SAMPLES / WORKGROUP_SIZE);
+const SAMPLES_PER_THREAD = Math.ceil(SAMPLES / WORKGROUP_COUNT);
 
 if (!navigator.gpu) throw new Error('WebGPU is not available in this browser.');
 
@@ -85,8 +89,10 @@ function createBindGroup(pipeline: GPUComputePipeline | GPURenderPipeline) {
 
 function updateCanvasSize() {
 	const dpr = window.devicePixelRatio || 1;
-	canvas.width = Math.floor(window.innerWidth * dpr) || 1;
-	canvas.height = Math.floor(window.innerHeight * dpr) || 1;
+	canvas.width = Math.floor(canvas.clientWidth * dpr) || 1;
+	canvas.height = Math.floor(canvas.clientHeight * dpr) || 1;
+
+	histogramBuffer?.destroy();
 	histogramBuffer = createHistogramBuffer(canvas.width, canvas.height);
 	computeBindGroup = createBindGroup(computePipeline);
 	renderBindGroup = createBindGroup(renderPipeline);
@@ -133,7 +139,14 @@ context.configure({ device, format, alphaMode: 'opaque' });
 new ResizeObserver(debounce(() => {
 	updateCanvasSize();
 	render();
-}, 200)).observe(document.body);
+}, 50)).observe(canvas);
+
+//function loop() {
+//	SEED += 1;
+//	render();
+//	requestAnimationFrame(loop);
+//}
+//requestAnimationFrame(loop);
 
 function getUniformData() {
 	const uniformData = new Float32Array(16);
