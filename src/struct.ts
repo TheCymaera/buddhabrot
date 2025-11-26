@@ -80,6 +80,24 @@ export class Struct {
 		return this;
 	}
 
+	vec4_f32(value: [number, number, number, number]) {
+		this.padToAlignment(ALIGNMENT.STRUCT);
+		this.append_f32(value[0]);
+		this.append_f32(value[1]);
+		this.append_f32(value[2]);
+		this.append_f32(value[3]);
+		return this;
+	}
+
+	vec4_u32(value: [number, number, number, number]) {
+		this.padToAlignment(ALIGNMENT.STRUCT);
+		this.append_u32(value[0]);
+		this.append_u32(value[1]);
+		this.append_u32(value[2]);
+		this.append_u32(value[3]);
+		return this;
+	}
+
 	pack() {
 		this.padToAlignment(ALIGNMENT.STRUCT);
 		return this.buffer.slice(0, this.offset);

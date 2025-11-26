@@ -8,11 +8,13 @@ struct Params {
 	sample_min : vec2<f32>,
 	sample_max : vec2<f32>,
 	view_center : vec2<f32>,
-	view_y_width : f32,
+	rotation : f32,
+	view_y_span : f32,
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
 	workgroup_count : u32,
+	base_color : vec4<f32>,
 };
 
 @group(0) @binding(0) var<storage, read> histogram : array<u32>;
@@ -61,8 +63,6 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 
 	let eased = 1 - pow(1.0 - t, params.gamma);
 
-	let color_base = vec4<f32>(166, 222, 255, 255) / 255.0;
-
-	let color = color_base * eased;
+	let color = params.base_color * eased;
 	return color;
 }

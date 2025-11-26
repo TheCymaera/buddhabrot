@@ -8,11 +8,13 @@ const SAMPLES = 2 ** 12;
 const MAX_ITERATIONS = 1000 * 3;
 const MIN_ITERATIONS = 0;
 const ESCAPE_RADIUS = 4;
-const SAMPLE_MIN = { x: -2, y: -1.5 };
-const SAMPLE_MAX = { x:  1, y:  1.5 };
-const VIEW_Y_WIDTH = SAMPLE_MAX.y - SAMPLE_MIN.y;
-const VIEW_CENTER = { x: -.5, y: 0 };
+const SAMPLE_MIN = { x: -2, y: -2 };
+const SAMPLE_MAX = { x:  2, y:  2 };
+const VIEW_Y_SPAN = SAMPLE_MAX.y - SAMPLE_MIN.y;
+const VIEW_CENTER = { x: 0, y: 0 };
+const ROTATION = 0;
 const SEED = () => performance.now();
+const BASE_COLOR = [166, 222, 255, 255].map(c => c / 255) as [number, number, number, number];
 const GAMMA = 4.0;
 
 const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
@@ -170,11 +172,13 @@ function getUniformData() {
 		.vec2_f32([SAMPLE_MIN.x, SAMPLE_MIN.y])
 		.vec2_f32([SAMPLE_MAX.x, SAMPLE_MAX.y])
 		.vec2_f32([VIEW_CENTER.x, VIEW_CENTER.y])
-		.f32(VIEW_Y_WIDTH)
+		.f32(ROTATION)
+		.f32(VIEW_Y_SPAN)
 		.f32(canvas.width / Math.max(canvas.height, 1))
 		.f32(ESCAPE_RADIUS ** 2)
 		.f32(GAMMA)
 		.u32(WORKGROUP_COUNT)
+		.vec4_f32(BASE_COLOR)
 		.pack();
 }
 
