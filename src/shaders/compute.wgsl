@@ -60,13 +60,12 @@ fn rotate_point(p: vec2<f32>, angle: f32) -> vec2<f32> {
 	);
 }
 
-const PI = 3.141592653589793;
 fn world_to_pixel(p: vec2<f32>, resolution: vec2<u32>) -> vec2<i32> {
 	let span = params.view_y_span;
 	let aspect_ratio = params.view_aspect_ratio;
 	let center = params.view_center;
 
-	let offset = rotate_point(p - center, params.rotation);
+	let offset = rotate_point(p - center, -params.rotation);
 
 	let half_w = span / 2.0 * aspect_ratio;
 	let half_h = span / 2.0;
@@ -113,7 +112,7 @@ fn accumulate_orbit(
 ) {
 	let resolution = params.resolution;
 	var z = z0;
-	for (var i = 0u; i < iterations; i = i + 1u) {
+	for (var i = 0u; i < iterations; i++) {
 		z = complex_pow(z, e) + c;
 		let pixel = world_to_pixel(z, resolution);
 		increment_pixel(pixel);
@@ -126,7 +125,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 	var seed = params.seed + gid.x * 747796405u + gid.y * 2891336453u + gid.z * 805459861u + 1u;
 	let sample_count = params.samples_per_thread;
 
-	for (var s = 0u; s < sample_count; s = s + 1u) {
+	for (var s = 0u; s < sample_count; s++) {
 		let z0 = vec2<f32>(0.0, 0.0);
 		let e = vec2<f32>(2.0, 0.0);
 		let c = complex_random(&seed, params.sample_min, params.sample_max);

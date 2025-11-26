@@ -12,7 +12,7 @@ const SAMPLE_MIN = { x: -2, y: -2 };
 const SAMPLE_MAX = { x:  2, y:  2 };
 const VIEW_Y_SPAN = SAMPLE_MAX.y - SAMPLE_MIN.y;
 const VIEW_CENTER = { x: 0, y: 0 };
-const ROTATION = 0;
+const ROTATION = Math.PI / 2;
 const SEED = () => performance.now();
 const BASE_COLOR = [166, 222, 255, 255].map(c => c / 255) as [number, number, number, number];
 const GAMMA = 4.0;
