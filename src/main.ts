@@ -2,16 +2,17 @@ import './main.css';
 import COMPUTE_SHADER from './shaders/compute.wgsl?raw';
 import RENDER_SHADER from './shaders/render.wgsl?raw';
 import { Struct } from './struct.js';
+import { Vec2 } from './Vec2.js';
 
 // config
 const SAMPLES = 2 ** 12;
 const MAX_ITERATIONS = 1000 * 3;
 const MIN_ITERATIONS = 0;
 const ESCAPE_RADIUS = 4;
-const SAMPLE_MIN = { x: -2, y: -2 };
-const SAMPLE_MAX = { x:  2, y:  2 };
-const VIEW_Y_SPAN = SAMPLE_MAX.y - SAMPLE_MIN.y;
-const VIEW_CENTER = { x: 0, y: 0 };
+const SAMPLE_MIN = Vec2.new(-2, -2);
+const SAMPLE_MAX = Vec2.new(2, 2);
+let VIEW_Y_SPAN = SAMPLE_MAX.y - SAMPLE_MIN.y;
+const VIEW_CENTER = Vec2.new(0, 0);
 const ROTATION = Math.PI / 2;
 const SEED = () => performance.now();
 const BASE_COLOR = [166, 222, 255, 255].map(c => c / 255) as [number, number, number, number];
@@ -156,6 +157,7 @@ context.configure({ device, format, alphaMode: 'opaque' });
 
 // main loop
 function loop() {
+	handleControls();
 	render();
 	requestAnimationFrame(loop);
 }
@@ -182,14 +184,56 @@ function getUniformData() {
 		.pack();
 }
 
-//function debounce<F extends (...args: any[]) => void>(fn: F, delay: number): F {
-//	let timeoutId: number | undefined;
-//	return function(this: any, ...args: any[]) {
-//		if (timeoutId !== undefined) {
-//			clearTimeout(timeoutId);
-//		}
-//		timeoutId = window.setTimeout(() => {
-//			fn.apply(this, args);
-//		}, delay);
-//	} as F;
-//}
+const keysPressed = new Set<string>();
+
+addEventListener('keydown', (e) => {
+	keysPressed.add(e.code);
+});
+
+addEventListener('keyup', (e) => {
+	keysPressed.delete(e.code);
+});
+
+function handleControls() {
+	const panAmount = 0.01 * VIEW_Y_SPAN;
+	const zoomFactor = 0.95;
+
+	let didChange = false;
+	const consumeKey = (key: string) => {
+		const result = keysPressed.has(key);
+		if (result) didChange = true;
+		return result;
+	}
+
+	const velocity = Vec2.new(0, 0);
+	if (consumeKey('KeyW')) {
+		velocity.y += panAmount;
+	}
+	if (consumeKey('KeyS')) {
+		velocity.y -= panAmount;
+	}
+	if (consumeKey('KeyA')) {
+		velocity.x -= panAmount;
+	}
+	if (consumeKey('KeyD')) {
+		velocity.x += panAmount;
+	}
+	if (consumeKey('ShiftLeft') || consumeKey('ShiftRight')) {
+		VIEW_Y_SPAN *= zoomFactor;
+	}
+	if (consumeKey('Space')) {
+		VIEW_Y_SPAN /= zoomFactor;
+	}
+	
+	velocity.rotate(ROTATION);
+
+	VIEW_CENTER.add(velocity);
+
+	if (didChange) {
+		resetHistogram();
+	}
+}
+
+function resetHistogram() {
+	device.queue.writeBuffer(histogramBuffer, 0, new Uint32Array((canvas.width * canvas.height) + 1).fill(0));
+}

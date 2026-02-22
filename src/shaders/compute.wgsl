@@ -15,7 +15,6 @@ struct Params {
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
-	workgroup_count : u32,
 	base_color : vec4<f32>,
 };
 
@@ -60,8 +59,9 @@ fn rotate_point(p: vec2<f32>, angle: f32) -> vec2<f32> {
 	);
 }
 
-fn world_to_pixel(p: vec2<f32>, resolution: vec2<u32>) -> vec2<i32> {
+fn world_to_pixel(p: vec2<f32>) -> vec2<i32> {
 	let span = params.view_y_span;
+	let resolution = params.resolution;
 	let aspect_ratio = params.view_aspect_ratio;
 	let center = params.view_center;
 
@@ -110,11 +110,10 @@ fn accumulate_orbit(
 	z0: vec2<f32>, e: vec2<f32>, c: vec2<f32>, 
 	iterations: u32
 ) {
-	let resolution = params.resolution;
 	var z = z0;
 	for (var i = 0u; i < iterations; i++) {
 		z = complex_pow(z, e) + c;
-		let pixel = world_to_pixel(z, resolution);
+		let pixel = world_to_pixel(z);
 		increment_pixel(pixel);
 	}
 }

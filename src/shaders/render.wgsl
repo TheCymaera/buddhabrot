@@ -13,7 +13,6 @@ struct Params {
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
-	workgroup_count : u32,
 	base_color : vec4<f32>,
 };
 
