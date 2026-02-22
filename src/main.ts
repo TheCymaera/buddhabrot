@@ -13,10 +13,16 @@ const SAMPLE_MIN = Vec2.new(-2, -2);
 const SAMPLE_MAX = Vec2.new(2, 2);
 let VIEW_Y_SPAN = SAMPLE_MAX.y - SAMPLE_MIN.y;
 const VIEW_CENTER = Vec2.new(0, 0);
+const INITIAL_Z = Vec2.new(0, 0);
+const EXPONENT = Vec2.new(2, 0);
 const ROTATION = Math.PI / 2;
+const Z_INDICATOR_SIZE = 0.025;
+const E_INDICATOR_SIZE = 0.025;
 const SEED = () => performance.now();
 const BASE_COLOR = [166, 222, 255, 255].map(c => c / 255) as [number, number, number, number];
 const GAMMA = 4.0;
+
+let inputMode: "c" | "z" | "e" = "c";
 
 const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
 if (!isFinite(WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from compute shader.');
@@ -174,12 +180,15 @@ function getUniformData() {
 		.vec2_f32([SAMPLE_MIN.x, SAMPLE_MIN.y])
 		.vec2_f32([SAMPLE_MAX.x, SAMPLE_MAX.y])
 		.vec2_f32([VIEW_CENTER.x, VIEW_CENTER.y])
+		.vec2_f32([INITIAL_Z.x, INITIAL_Z.y])
+		.vec2_f32([EXPONENT.x, EXPONENT.y])
 		.f32(ROTATION)
 		.f32(VIEW_Y_SPAN)
 		.f32(canvas.width / Math.max(canvas.height, 1))
 		.f32(ESCAPE_RADIUS ** 2)
 		.f32(GAMMA)
-		.u32(WORKGROUP_COUNT)
+		.f32(inputMode === 'z' ? Z_INDICATOR_SIZE : 0)
+		.f32(inputMode === 'e' ? E_INDICATOR_SIZE : 0)
 		.vec4_f32(BASE_COLOR)
 		.pack();
 }
@@ -188,6 +197,18 @@ const keysPressed = new Set<string>();
 
 addEventListener('keydown', (e) => {
 	keysPressed.add(e.code);
+
+	if (e.code === 'Digit1') {
+		inputMode = 'c';
+	}
+	
+	if (e.code === 'Digit2') {
+		inputMode = 'z';
+	}
+	
+	if (e.code === 'Digit3') {
+		inputMode = 'e';
+	}
 });
 
 addEventListener('keyup', (e) => {
@@ -227,7 +248,12 @@ function handleControls() {
 	
 	velocity.rotate(ROTATION);
 
-	VIEW_CENTER.add(velocity);
+	const targetVector =
+		inputMode === 'c' ? VIEW_CENTER :
+		inputMode === 'z' ? INITIAL_Z :
+		EXPONENT;
+
+	targetVector.add(velocity);
 
 	if (didChange) {
 		resetHistogram();

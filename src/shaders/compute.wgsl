@@ -10,11 +10,15 @@ struct Params {
 	sample_min : vec2<f32>,
 	sample_max : vec2<f32>,
 	view_center : vec2<f32>,
+	initial_z : vec2<f32>,
+	exponent : vec2<f32>,
 	rotation : f32,
 	view_y_span : f32,
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
+	z_indicator_size : f32,
+	e_indicator_size : f32,
 	base_color : vec4<f32>,
 };
 
@@ -125,8 +129,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 	let sample_count = params.samples_per_thread;
 
 	for (var s = 0u; s < sample_count; s++) {
-		let z0 = vec2<f32>(0.0, 0.0);
-		let e = vec2<f32>(2.0, 0.0);
+		let z0 = params.initial_z;
+		let e = params.exponent;
 		let c = complex_random(&seed, params.sample_min, params.sample_max);
 		
 		let i = count_iterations(z0, e, c);
