@@ -7,8 +7,10 @@ struct Params {
 	min_iterations : u32,
 	max_iterations : u32,
 	seed : u32,
-	sample_min : vec2<f32>,
-	sample_max : vec2<f32>,
+	//sample_min : vec2<f32>,
+	//sample_max : vec2<f32>,
+	sample_center : vec2<f32>,
+	sample_radius : f32,
 	view_center : vec2<f32>,
 	initial_z : vec2<f32>,
 	exponent : vec2<f32>,
@@ -97,16 +99,17 @@ fn count_iterations(z0: vec2<f32>, e: vec2<f32>, c: vec2<f32>) -> u32 {
 	return iterations;
 }
 
-fn increment_pixel(pixel: vec2<i32>) {
+fn increment_pixel_channel(pixel: vec2<i32>, channel: u32) {
 	let resolution = params.resolution;
 	if (pixel.x < 0 || pixel.y < 0 || pixel.x >= i32(resolution.x) || pixel.y >= i32(resolution.y)) {
 		return;
 	}
 
-	let index = u32(pixel.y) * resolution.x + u32(pixel.x);
+	let pixels = resolution.x * resolution.y;
+	let index = (u32(pixel.y) * resolution.x + u32(pixel.x)) * 3u + channel;
 	let new_value = atomicAdd(&histogram[index], 1u) + 1u;
 
-	let max_index = resolution.x * resolution.y;
+	let max_index = pixels * 3u + channel;
 	atomicMax(&histogram[max_index], new_value);
 }
 
@@ -118,8 +121,17 @@ fn accumulate_orbit(
 	for (var i = 0u; i < iterations; i++) {
 		z = complex_pow(z, e) + c;
 		let pixel = world_to_pixel(z);
-		increment_pixel(pixel);
+
+		if (i <= params.max_iterations) { increment_pixel_channel(pixel, 0u); }
+		if (i <= params.max_iterations / 10u) { increment_pixel_channel(pixel, 1u); }
+		if (i <= params.max_iterations / 100u) { increment_pixel_channel(pixel, 2u); }
 	}
+}
+
+fn random_complex_delta(state: ptr<function, u32>, original: vec2<f32>, max_delta: f32) -> vec2<f32> {
+	let angle = random_in_range(state, 0.0, 6.28318530718);
+	let radius = random_in_range(state, 0.0, max_delta);
+	return original + vec2<f32>(cos(angle), sin(angle)) * radius;
 }
 
 @compute @workgroup_size(64)
@@ -131,7 +143,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 	for (var s = 0u; s < sample_count; s++) {
 		let z0 = params.initial_z;
 		let e = params.exponent;
-		let c = complex_random(&seed, params.sample_min, params.sample_max);
+		let c = random_complex_delta(&seed, params.sample_center, params.sample_radius);
 		
 		let i = count_iterations(z0, e, c);
 

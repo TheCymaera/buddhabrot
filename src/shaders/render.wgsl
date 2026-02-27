@@ -5,8 +5,10 @@ struct Params {
 	min_iterations : u32,
 	max_iterations : u32,
 	seed : u32,
-	sample_min : vec2<f32>,
-	sample_max : vec2<f32>,
+	//sample_min : vec2<f32>,
+	//sample_max : vec2<f32>,
+	sample_center : vec2<f32>,
+	sample_radius : f32,
 	view_center : vec2<f32>,
 	initial_z : vec2<f32>,
 	exponent : vec2<f32>,
@@ -70,12 +72,12 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 
 	// render indicators
 	{
-		let uv01 = clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0));
+		let uv_clamped = clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0));
 		let half_h = params.view_y_span * 0.5;
 		let half_w = half_h * params.view_aspect_ratio;
 		let offset = vec2<f32>(
-			mix(-half_w, half_w, uv01.x),
-			mix(-half_h, half_h, uv01.y)
+			mix(-half_w, half_w, uv_clamped.x),
+			mix(-half_h, half_h, uv_clamped.y)
 		);
 		let world = rotate_point(offset, params.rotation) + params.view_center;
 
@@ -87,16 +89,26 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 		}
 	}
 
-	let index = y * res.x + x;
+	let pixels = res.x * res.y;
+	let pixel_index = (y * res.x + x) * 3u;
 
-	let value = f32(histogram[index]);
-	let max_index = res.x * res.y;
-	let max_value = max(f32(histogram[max_index]), 1.0);
+	let r_iterations = histogram[pixel_index + 0u];
+	let b_iterations = histogram[pixel_index + 2u];
+	let g_iterations = histogram[pixel_index + 1u];
 
-	let t = clamp(value / max_value, 0.0, 1.0);
+	let max_base = pixels * 3u;
+	let r_max = max(f32(histogram[max_base + 0u]), 1.0);
+	let b_max = max(f32(histogram[max_base + 2u]), 1.0);
+	let g_max = max(f32(histogram[max_base + 1u]), 1.0);
 
-	let eased = 1 - pow(1.0 - t, params.gamma);
+	let r_t = clamp(f32(r_iterations) / r_max, 0.0, 1.0);
+	let g_t = clamp(f32(g_iterations) / g_max, 0.0, 1.0);
+	let b_t = clamp(f32(b_iterations) / b_max, 0.0, 1.0);
 
-	let color = params.base_color * eased;
-	return color;
+	let r = 1.0 - pow(1.0 - r_t, params.gamma);
+	let g = 1.0 - pow(1.0 - g_t, params.gamma);
+	let b = 1.0 - pow(1.0 - b_t, params.gamma);
+
+	return vec4<f32>(r, g, b, 1.0);
+	//return vec4<f32>(1.0, .0, .0, 1.0);
 }

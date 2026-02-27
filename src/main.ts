@@ -9,9 +9,11 @@ const SAMPLES = 2 ** 12;
 const MAX_ITERATIONS = 1000 * 3;
 const MIN_ITERATIONS = 0;
 const ESCAPE_RADIUS = 4;
-const SAMPLE_MIN = Vec2.new(-2, -2);
-const SAMPLE_MAX = Vec2.new(2, 2);
-let VIEW_Y_SPAN = SAMPLE_MAX.y - SAMPLE_MIN.y;
+//const SAMPLE_MIN = Vec2.new(-2, -2);
+//const SAMPLE_MAX = Vec2.new(2, 2);
+const SAMPLE_CENTER = Vec2.new(0, 0);
+const SAMPLE_RADIUS = 2.5;
+let VIEW_Y_SPAN = 4.0;
 const VIEW_CENTER = Vec2.new(0, 0);
 const INITIAL_Z = Vec2.new(0, 0);
 const EXPONENT = Vec2.new(2, 0);
@@ -76,7 +78,7 @@ let computeBindGroup: GPUBindGroup;
 let renderBindGroup: GPUBindGroup;
 
 function createHistogramBuffer(width: number, height: number) {
-	const elementCount = (width * height) + 1; // extra slot for max value
+	const elementCount = (width * height * 3) + 3; // 3 channels + max slots
 	const buffer = device.createBuffer({
 		size: elementCount * Uint32Array.BYTES_PER_ELEMENT,
 		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
@@ -177,8 +179,10 @@ function getUniformData() {
 		.u32(MIN_ITERATIONS)
 		.u32(MAX_ITERATIONS)
 		.u32(SEED())
-		.vec2_f32([SAMPLE_MIN.x, SAMPLE_MIN.y])
-		.vec2_f32([SAMPLE_MAX.x, SAMPLE_MAX.y])
+		//.vec2_f32([SAMPLE_MIN.x, SAMPLE_MIN.y])
+		//.vec2_f32([SAMPLE_MAX.x, SAMPLE_MAX.y])
+		.vec2_f32([SAMPLE_CENTER.x, SAMPLE_CENTER.y])
+		.f32(SAMPLE_RADIUS)
 		.vec2_f32([VIEW_CENTER.x, VIEW_CENTER.y])
 		.vec2_f32([INITIAL_Z.x, INITIAL_Z.y])
 		.vec2_f32([EXPONENT.x, EXPONENT.y])
@@ -195,6 +199,8 @@ function getUniformData() {
 
 const keysPressed = new Set<string>();
 
+let moveSpeed = 1;
+
 addEventListener('keydown', (e) => {
 	keysPressed.add(e.code);
 
@@ -209,6 +215,16 @@ addEventListener('keydown', (e) => {
 	if (e.code === 'Digit3') {
 		inputMode = 'e';
 	}
+
+	if (e.code === 'BracketLeft') {
+		moveSpeed /= 2;
+	}
+
+	if (e.code === 'BracketRight') {
+		moveSpeed *= 2;
+	}
+
+	console.log(e.code);
 });
 
 addEventListener('keyup', (e) => {
@@ -216,7 +232,7 @@ addEventListener('keyup', (e) => {
 });
 
 function handleControls() {
-	const panAmount = 0.01 * VIEW_Y_SPAN;
+	const panAmount = 0.01 * VIEW_Y_SPAN * moveSpeed;
 	const zoomFactor = 0.95;
 
 	let didChange = false;
@@ -261,5 +277,9 @@ function handleControls() {
 }
 
 function resetHistogram() {
-	device.queue.writeBuffer(histogramBuffer, 0, new Uint32Array((canvas.width * canvas.height) + 1).fill(0));
+	device.queue.writeBuffer(
+		histogramBuffer,
+		0,
+		new Uint32Array((canvas.width * canvas.height * 3) + 3).fill(0)
+	);
 }
