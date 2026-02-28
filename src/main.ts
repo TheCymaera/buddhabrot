@@ -1,6 +1,7 @@
 import './main.css';
 import COMPUTE_SHADER from './shaders/compute.wgsl?raw';
 import RENDER_SHADER from './shaders/render.wgsl?raw';
+import SMOOTH_SHADER from './shaders/smooth.wgsl?raw';
 import { Struct } from './struct.js';
 import { Vec2 } from './Vec2.js';
 
@@ -23,6 +24,7 @@ const E_INDICATOR_SIZE = 0.025;
 const SEED = () => performance.now();
 const BASE_COLOR = [166, 222, 255, 255].map(c => c / 255) as [number, number, number, number];
 const GAMMA = 4.0;
+const HISTOGRAM_LERP = 0.2;
 
 let inputMode: "c" | "z" | "e" = "c";
 
@@ -30,6 +32,9 @@ const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)
 if (!isFinite(WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from compute shader.');
 const WORKGROUP_COUNT = Math.ceil(SAMPLES / WORKGROUP_SIZE);
 const SAMPLES_PER_THREAD = Math.ceil(SAMPLES / WORKGROUP_COUNT);
+
+const SMOOTH_WORKGROUP_SIZE = parseInt(SMOOTH_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
+if (!isFinite(SMOOTH_WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from smooth shader.');
 
 if (!navigator.gpu) throw new Error('WebGPU is not available in this browser.');
 
@@ -51,11 +56,20 @@ const uniformBuffer = device.createBuffer({
 
 const computeModule = device.createShaderModule({ code: COMPUTE_SHADER });
 const renderModule = device.createShaderModule({ code: RENDER_SHADER });
+const smoothModule = device.createShaderModule({ code: SMOOTH_SHADER });
 
 const computePipeline = device.createComputePipeline({
 	layout: 'auto',
 	compute: {
 		module: computeModule,
+		entryPoint: 'main',
+	},
+});
+
+const smoothPipeline = device.createComputePipeline({
+	layout: 'auto',
+	compute: {
+		module: smoothModule,
 		entryPoint: 'main',
 	},
 });
@@ -74,11 +88,17 @@ const renderPipeline = device.createRenderPipeline({
 });
 
 let histogramBuffer: GPUBuffer;
+let smoothedHistogramBuffer: GPUBuffer;
 let computeBindGroup: GPUBindGroup;
+let smoothBindGroup: GPUBindGroup;
 let renderBindGroup: GPUBindGroup;
 
+function getHistogramElementCount(width: number, height: number) {
+	return (width * height * 3) + 3; // 3 channels + max slots
+}
+
 function createHistogramBuffer(width: number, height: number) {
-	const elementCount = (width * height * 3) + 3; // 3 channels + max slots
+	const elementCount = getHistogramElementCount(width, height);
 	const buffer = device.createBuffer({
 		size: elementCount * Uint32Array.BYTES_PER_ELEMENT,
 		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
@@ -89,12 +109,47 @@ function createHistogramBuffer(width: number, height: number) {
 	return buffer;
 }
 
-function createBindGroup(pipeline: GPUComputePipeline | GPURenderPipeline) {
+function createSmoothedHistogramBuffer(width: number, height: number) {
+	const elementCount = getHistogramElementCount(width, height);
+	const buffer = device.createBuffer({
+		size: elementCount * Float32Array.BYTES_PER_ELEMENT,
+		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+		mappedAtCreation: true,
+	});
+	new Float32Array(buffer.getMappedRange()).fill(0);
+	buffer.unmap();
+	return buffer;
+}
+
+function createComputeBindGroup() {
 	return device.createBindGroup({
-		label: pipeline instanceof GPUComputePipeline ? 'compute bind group' : 'render bind group',
-		layout: pipeline.getBindGroupLayout(0),
+		label: 'compute bind group',
+		layout: computePipeline.getBindGroupLayout(0),
 		entries: [
 			{ binding: 0, resource: { buffer: histogramBuffer } },
+			{ binding: 1, resource: { buffer: uniformBuffer } },
+		],
+	});
+}
+
+function createSmoothBindGroup() {
+	return device.createBindGroup({
+		label: 'smooth bind group',
+		layout: smoothPipeline.getBindGroupLayout(0),
+		entries: [
+			{ binding: 0, resource: { buffer: histogramBuffer } },
+			{ binding: 1, resource: { buffer: smoothedHistogramBuffer } },
+			{ binding: 2, resource: { buffer: uniformBuffer } },
+		],
+	});
+}
+
+function createRenderBindGroup() {
+	return device.createBindGroup({
+		label: 'render bind group',
+		layout: renderPipeline.getBindGroupLayout(0),
+		entries: [
+			{ binding: 0, resource: { buffer: smoothedHistogramBuffer } },
 			{ binding: 1, resource: { buffer: uniformBuffer } },
 		],
 	});
@@ -106,9 +161,12 @@ function updateCanvasSize() {
 	canvas.height = Math.floor(canvas.clientHeight * dpr) || 1;
 
 	histogramBuffer?.destroy();
+	smoothedHistogramBuffer?.destroy();
 	histogramBuffer = createHistogramBuffer(canvas.width, canvas.height);
-	computeBindGroup = createBindGroup(computePipeline);
-	renderBindGroup = createBindGroup(renderPipeline);
+	smoothedHistogramBuffer = createSmoothedHistogramBuffer(canvas.width, canvas.height);
+	computeBindGroup = createComputeBindGroup();
+	smoothBindGroup = createSmoothBindGroup();
+	renderBindGroup = createRenderBindGroup();
 };
 
 function render() {
@@ -123,6 +181,14 @@ function render() {
 	computePass.setBindGroup(0, computeBindGroup);
 	computePass.dispatchWorkgroups(WORKGROUP_COUNT);
 	computePass.end();
+
+	// smooth histogram
+	const smoothPass = encoder.beginComputePass();
+	smoothPass.setPipeline(smoothPipeline);
+	smoothPass.setBindGroup(0, smoothBindGroup);
+	const smoothCount = Math.ceil(getHistogramElementCount(canvas.width, canvas.height) / SMOOTH_WORKGROUP_SIZE);
+	smoothPass.dispatchWorkgroups(smoothCount);
+	smoothPass.end();
 
 	// render pass (into textureView)
 	const textureView = context.getCurrentTexture().createView();
@@ -191,6 +257,7 @@ function getUniformData() {
 		.f32(canvas.width / Math.max(canvas.height, 1))
 		.f32(ESCAPE_RADIUS ** 2)
 		.f32(GAMMA)
+		.f32(HISTOGRAM_LERP)
 		.f32(inputMode === 'z' ? Z_INDICATOR_SIZE : 0)
 		.f32(inputMode === 'e' ? E_INDICATOR_SIZE : 0)
 		.vec4_f32(BASE_COLOR)
@@ -277,9 +344,15 @@ function handleControls() {
 }
 
 function resetHistogram() {
+	const elementCount = getHistogramElementCount(canvas.width, canvas.height);
 	device.queue.writeBuffer(
 		histogramBuffer,
 		0,
-		new Uint32Array((canvas.width * canvas.height * 3) + 3).fill(0)
+		new Uint32Array(elementCount).fill(0)
 	);
+	//device.queue.writeBuffer(
+	//	smoothedHistogramBuffer,
+	//	0,
+	//	new Float32Array(elementCount).fill(0)
+	//);
 }

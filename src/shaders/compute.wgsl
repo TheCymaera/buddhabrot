@@ -19,6 +19,7 @@ struct Params {
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
+	histogram_lerp : f32,
 	z_indicator_size : f32,
 	e_indicator_size : f32,
 	base_color : vec4<f32>,

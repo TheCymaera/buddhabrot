@@ -17,12 +17,13 @@ struct Params {
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
+	histogram_lerp : f32,
 	z_indicator_size : f32,
 	e_indicator_size : f32,
 	base_color : vec4<f32>,
 };
 
-@group(0) @binding(0) var<storage, read> histogram : array<u32>;
+@group(0) @binding(0) var<storage, read> histogram : array<f32>;
 @group(0) @binding(1) var<uniform> params : Params;
 
 
@@ -97,13 +98,13 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 	let g_iterations = histogram[pixel_index + 1u];
 
 	let max_base = pixels * 3u;
-	let r_max = max(f32(histogram[max_base + 0u]), 1.0);
-	let b_max = max(f32(histogram[max_base + 2u]), 1.0);
-	let g_max = max(f32(histogram[max_base + 1u]), 1.0);
+	let r_max = max(histogram[max_base + 0u], 1.0);
+	let b_max = max(histogram[max_base + 2u], 1.0);
+	let g_max = max(histogram[max_base + 1u], 1.0);
 
-	let r_t = clamp(f32(r_iterations) / r_max, 0.0, 1.0);
-	let g_t = clamp(f32(g_iterations) / g_max, 0.0, 1.0);
-	let b_t = clamp(f32(b_iterations) / b_max, 0.0, 1.0);
+	let r_t = clamp(r_iterations / r_max, 0.0, 1.0);
+	let g_t = clamp(g_iterations / g_max, 0.0, 1.0);
+	let b_t = clamp(b_iterations / b_max, 0.0, 1.0);
 
 	let r = 1.0 - pow(1.0 - r_t, params.gamma);
 	let g = 1.0 - pow(1.0 - g_t, params.gamma);
