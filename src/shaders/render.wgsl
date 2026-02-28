@@ -20,7 +20,6 @@ struct Params {
 	histogram_lerp : f32,
 	z_indicator_size : f32,
 	e_indicator_size : f32,
-	base_color : vec4<f32>,
 };
 
 @group(0) @binding(0) var<storage, read> histogram : array<f32>;

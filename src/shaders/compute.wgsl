@@ -22,16 +22,30 @@ struct Params {
 	histogram_lerp : f32,
 	z_indicator_size : f32,
 	e_indicator_size : f32,
-	base_color : vec4<f32>,
 };
 
-fn lcg(state: ptr<function, u32>) -> f32 {
-	(*state) = (*state) * 1664525u + 1013904223u;
-	return f32((*state & 0x00FFFFFFu)) / 16777216.0;
+fn pcg_hash(input: u32) -> u32 {
+	var state = input * 747796405u + 2891336453u;
+	let word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+	return (word >> 22u) ^ word;
+}
+
+fn random_u32(state: ptr<function, u32>) -> u32 {
+	var x = *state;
+	x = x ^ (x << 13u);
+	x = x ^ (x >> 17u);
+	x = x ^ (x << 5u);
+	*state = x;
+	return x;
+}
+
+fn random_f32(state: ptr<function, u32>) -> f32 {
+	let x = random_u32(state);
+	return f32(x) * (1.0 / 4294967296.0);
 }
 
 fn random_in_range(state: ptr<function, u32>, min: f32, max: f32) -> f32 {
-	return lcg(state) * (max - min) + min;
+	return random_f32(state) * (max - min) + min;
 }
 
 fn complex_random(state: ptr<function, u32>, min: vec2<f32>, max: vec2<f32>) -> vec2<f32> {
@@ -138,7 +152,11 @@ fn random_complex_delta(state: ptr<function, u32>, original: vec2<f32>, max_delt
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 	let resolution = params.resolution;
+
 	var seed = params.seed + gid.x * 747796405u + gid.y * 2891336453u + gid.z * 805459861u + 1u;
+	seed = pcg_hash(seed);
+	if (seed == 0u) { seed = 1u; }
+
 	let sample_count = params.samples_per_thread;
 
 	for (var s = 0u; s < sample_count; s++) {

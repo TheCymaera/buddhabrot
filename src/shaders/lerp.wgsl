@@ -19,11 +19,10 @@ struct Params {
 	histogram_lerp : f32,
 	z_indicator_size : f32,
 	e_indicator_size : f32,
-	base_color : vec4<f32>,
 };
 
 @group(0) @binding(0) var<storage, read> histogram : array<u32>;
-@group(0) @binding(1) var<storage, read_write> smoothed : array<f32>;
+@group(0) @binding(1) var<storage, read_write> lerped : array<f32>;
 @group(0) @binding(2) var<uniform> params : Params;
 
 @compute @workgroup_size(256)
@@ -37,6 +36,6 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
 	let t = clamp(params.histogram_lerp, 0.0, 1.0);
 	let curr = f32(histogram[index]);
-	let prev = smoothed[index];
-	smoothed[index] = mix(prev, curr, t);
+	let prev = lerped[index];
+	lerped[index] = mix(prev, curr, t);
 }

@@ -1,358 +1,120 @@
+import { AnimationFrameScheduler } from './open-utilities/AnimationFrameScheduler.js';
+import { Buddhabrot } from './buddhabrot.js';
+import { Duration } from './open-utilities/Duration.js';
+import { inputMap } from './InputMap.js';
 import './main.css';
-import COMPUTE_SHADER from './shaders/compute.wgsl?raw';
-import RENDER_SHADER from './shaders/render.wgsl?raw';
-import SMOOTH_SHADER from './shaders/smooth.wgsl?raw';
-import { Struct } from './struct.js';
-import { Vec2 } from './Vec2.js';
-
-// config
-const SAMPLES = 2 ** 12;
-const MAX_ITERATIONS = 1000 * 3;
-const MIN_ITERATIONS = 0;
-const ESCAPE_RADIUS = 4;
-//const SAMPLE_MIN = Vec2.new(-2, -2);
-//const SAMPLE_MAX = Vec2.new(2, 2);
-const SAMPLE_CENTER = Vec2.new(0, 0);
-const SAMPLE_RADIUS = 2.5;
-let VIEW_Y_SPAN = 4.0;
-const VIEW_CENTER = Vec2.new(0, 0);
-const INITIAL_Z = Vec2.new(0, 0);
-const EXPONENT = Vec2.new(2, 0);
-const ROTATION = Math.PI / 2;
-const Z_INDICATOR_SIZE = 0.025;
-const E_INDICATOR_SIZE = 0.025;
-const SEED = () => performance.now();
-const BASE_COLOR = [166, 222, 255, 255].map(c => c / 255) as [number, number, number, number];
-const GAMMA = 4.0;
-const HISTOGRAM_LERP = 0.2;
-
-let inputMode: "c" | "z" | "e" = "c";
-
-const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
-if (!isFinite(WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from compute shader.');
-const WORKGROUP_COUNT = Math.ceil(SAMPLES / WORKGROUP_SIZE);
-const SAMPLES_PER_THREAD = Math.ceil(SAMPLES / WORKGROUP_COUNT);
-
-const SMOOTH_WORKGROUP_SIZE = parseInt(SMOOTH_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
-if (!isFinite(SMOOTH_WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from smooth shader.');
-
-if (!navigator.gpu) throw new Error('WebGPU is not available in this browser.');
+import { Renderer } from './Renderer.js';
+import { Timeline } from './Timeline.js';
+import { Vec2 } from './open-utilities/Vec2.js';
 
 const canvas = document.querySelector('canvas')!;
+const buddhabrot = new Buddhabrot();
+const renderer = await Renderer.create(canvas);
 
-const context = canvas.getContext('webgpu')!;
-if (!context) throw new Error('Failed to create WebGPU context');
+const app = new class App {
+	moveSpeed = 1;
+	doUpdates = true;
 
-const adapter = await navigator.gpu.requestAdapter();
-if (!adapter) throw new Error('Failed to get GPU adapter');
+	readonly timeline = new Timeline();
+	isRecording = false;
 
-const device = await adapter.requestDevice();
-const format = navigator.gpu.getPreferredCanvasFormat();
-
-const uniformBuffer = device.createBuffer({
-	size: getUniformData().byteLength,
-	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-});
-
-const computeModule = device.createShaderModule({ code: COMPUTE_SHADER });
-const renderModule = device.createShaderModule({ code: RENDER_SHADER });
-const smoothModule = device.createShaderModule({ code: SMOOTH_SHADER });
-
-const computePipeline = device.createComputePipeline({
-	layout: 'auto',
-	compute: {
-		module: computeModule,
-		entryPoint: 'main',
-	},
-});
-
-const smoothPipeline = device.createComputePipeline({
-	layout: 'auto',
-	compute: {
-		module: smoothModule,
-		entryPoint: 'main',
-	},
-});
-
-const renderPipeline = device.createRenderPipeline({
-	layout: 'auto',
-	vertex: {
-		module: renderModule,
-		entryPoint: 'vs_main',
-	},
-	fragment: {
-		module: renderModule,
-		entryPoint: 'fs_main',
-		targets: [{ format }],
-	},
-});
-
-let histogramBuffer: GPUBuffer;
-let smoothedHistogramBuffer: GPUBuffer;
-let computeBindGroup: GPUBindGroup;
-let smoothBindGroup: GPUBindGroup;
-let renderBindGroup: GPUBindGroup;
-
-function getHistogramElementCount(width: number, height: number) {
-	return (width * height * 3) + 3; // 3 channels + max slots
+	lastFrameTime = performance.now();
 }
 
-function createHistogramBuffer(width: number, height: number) {
-	const elementCount = getHistogramElementCount(width, height);
-	const buffer = device.createBuffer({
-		size: elementCount * Uint32Array.BYTES_PER_ELEMENT,
-		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		mappedAtCreation: true,
-	});
-	new Uint32Array(buffer.getMappedRange()).fill(0);
-	buffer.unmap();
-	return buffer;
-}
+Object.assign(globalThis, {
+	buddhabrot,
+	renderer,
+	Vec2,
+	Buddhabrot,
+	AnimationFrameScheduler,
+	Duration,
+	Timeline,
+	inputMap,
+	app,
+})
 
-function createSmoothedHistogramBuffer(width: number, height: number) {
-	const elementCount = getHistogramElementCount(width, height);
-	const buffer = device.createBuffer({
-		size: elementCount * Float32Array.BYTES_PER_ELEMENT,
-		usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-		mappedAtCreation: true,
-	});
-	new Float32Array(buffer.getMappedRange()).fill(0);
-	buffer.unmap();
-	return buffer;
-}
+// handle canvas resize
+new ResizeObserver(() => {
+	if (!app.doUpdates) return;
 
-function createComputeBindGroup() {
-	return device.createBindGroup({
-		label: 'compute bind group',
-		layout: computePipeline.getBindGroupLayout(0),
-		entries: [
-			{ binding: 0, resource: { buffer: histogramBuffer } },
-			{ binding: 1, resource: { buffer: uniformBuffer } },
-		],
-	});
-}
-
-function createSmoothBindGroup() {
-	return device.createBindGroup({
-		label: 'smooth bind group',
-		layout: smoothPipeline.getBindGroupLayout(0),
-		entries: [
-			{ binding: 0, resource: { buffer: histogramBuffer } },
-			{ binding: 1, resource: { buffer: smoothedHistogramBuffer } },
-			{ binding: 2, resource: { buffer: uniformBuffer } },
-		],
-	});
-}
-
-function createRenderBindGroup() {
-	return device.createBindGroup({
-		label: 'render bind group',
-		layout: renderPipeline.getBindGroupLayout(0),
-		entries: [
-			{ binding: 0, resource: { buffer: smoothedHistogramBuffer } },
-			{ binding: 1, resource: { buffer: uniformBuffer } },
-		],
-	});
-}
-
-function updateCanvasSize() {
 	const dpr = window.devicePixelRatio || 1;
-	canvas.width = Math.floor(canvas.clientWidth * dpr) || 1;
-	canvas.height = Math.floor(canvas.clientHeight * dpr) || 1;
-
-	histogramBuffer?.destroy();
-	smoothedHistogramBuffer?.destroy();
-	histogramBuffer = createHistogramBuffer(canvas.width, canvas.height);
-	smoothedHistogramBuffer = createSmoothedHistogramBuffer(canvas.width, canvas.height);
-	computeBindGroup = createComputeBindGroup();
-	smoothBindGroup = createSmoothBindGroup();
-	renderBindGroup = createRenderBindGroup();
-};
-
-function render() {
-	// write uniforms
-	device.queue.writeBuffer(uniformBuffer, 0, getUniformData());
-
-	const encoder = device.createCommandEncoder();
-	
-	// compute pass
-	const computePass = encoder.beginComputePass();
-	computePass.setPipeline(computePipeline);
-	computePass.setBindGroup(0, computeBindGroup);
-	computePass.dispatchWorkgroups(WORKGROUP_COUNT);
-	computePass.end();
-
-	// smooth histogram
-	const smoothPass = encoder.beginComputePass();
-	smoothPass.setPipeline(smoothPipeline);
-	smoothPass.setBindGroup(0, smoothBindGroup);
-	const smoothCount = Math.ceil(getHistogramElementCount(canvas.width, canvas.height) / SMOOTH_WORKGROUP_SIZE);
-	smoothPass.dispatchWorkgroups(smoothCount);
-	smoothPass.end();
-
-	// render pass (into textureView)
-	const textureView = context.getCurrentTexture().createView();
-	const renderPass = encoder.beginRenderPass({
-		colorAttachments: [
-			{
-				view: textureView,
-				loadOp: 'clear',
-				storeOp: 'store',
-				clearValue: { r: 0, g: 0, b: 0, a: 0 },
-			},
-		],
+	renderer.setResolution({
+		width: Math.floor(canvas.clientWidth * dpr),
+		height: Math.floor(canvas.clientHeight * dpr),
 	});
-	renderPass.setPipeline(renderPipeline);
-	renderPass.setBindGroup(0, renderBindGroup);
-	renderPass.draw(3);
-	renderPass.end();
-
-	// submit
-	device.queue.submit([encoder.finish()]);
-};
-
-
-// configure
-context.configure({ device, format, alphaMode: 'opaque' });
-
-// handle resize
-{
-	let init = false;
-	new ResizeObserver(() => {
-		if (!init) {
-			init = true;
-			return;
-		}
-
-		updateCanvasSize();
-		render();
-	}).observe(canvas);
-}
+	renderer.render(buddhabrot);
+}).observe(canvas);
 
 // main loop
-function loop() {
-	handleControls();
-	render();
-	requestAnimationFrame(loop);
-}
-updateCanvasSize();
-requestAnimationFrame(loop);
+AnimationFrameScheduler.loop((deltaTime) => {
+	if (!app.doUpdates) return;
 
-function getUniformData() {
-	return new Struct()
-		.vec2_u32([canvas.width, canvas.height])
-		.u32(SAMPLES_PER_THREAD)
-		.u32(MIN_ITERATIONS)
-		.u32(MAX_ITERATIONS)
-		.u32(SEED())
-		//.vec2_f32([SAMPLE_MIN.x, SAMPLE_MIN.y])
-		//.vec2_f32([SAMPLE_MAX.x, SAMPLE_MAX.y])
-		.vec2_f32([SAMPLE_CENTER.x, SAMPLE_CENTER.y])
-		.f32(SAMPLE_RADIUS)
-		.vec2_f32([VIEW_CENTER.x, VIEW_CENTER.y])
-		.vec2_f32([INITIAL_Z.x, INITIAL_Z.y])
-		.vec2_f32([EXPONENT.x, EXPONENT.y])
-		.f32(ROTATION)
-		.f32(VIEW_Y_SPAN)
-		.f32(canvas.width / Math.max(canvas.height, 1))
-		.f32(ESCAPE_RADIUS ** 2)
-		.f32(GAMMA)
-		.f32(HISTOGRAM_LERP)
-		.f32(inputMode === 'z' ? Z_INDICATOR_SIZE : 0)
-		.f32(inputMode === 'e' ? E_INDICATOR_SIZE : 0)
-		.vec4_f32(BASE_COLOR)
-		.pack();
-}
+	update(deltaTime);
+	renderer.render(buddhabrot);
 
-const keysPressed = new Set<string>();
-
-let moveSpeed = 1;
-
-addEventListener('keydown', (e) => {
-	keysPressed.add(e.code);
-
-	if (e.code === 'Digit1') {
-		inputMode = 'c';
-	}
-	
-	if (e.code === 'Digit2') {
-		inputMode = 'z';
-	}
-	
-	if (e.code === 'Digit3') {
-		inputMode = 'e';
+	if (app.isRecording) {
+		app.timeline.addKeyframe({
+			state: buddhabrot.clone(),
+			duration: deltaTime,
+		});
 	}
 
-	if (e.code === 'BracketLeft') {
-		moveSpeed /= 2;
-	}
-
-	if (e.code === 'BracketRight') {
-		moveSpeed *= 2;
-	}
-
-	console.log(e.code);
+	document.querySelector('#recordingIndicator')!.toggleAttribute('hidden', !app.isRecording);
+	document.querySelector('#recordingIndicator_frameCount')!.textContent = String(app.timeline.frames.length);
 });
 
-addEventListener('keyup', (e) => {
-	keysPressed.delete(e.code);
-});
+// handle inputs
+inputMap.listeners.onInputModeChange = (mode) => buddhabrot.inputMode = mode;
+inputMap.listeners.onHalfSpeed = () => app.moveSpeed /= 2;
+inputMap.listeners.onDoubleSpeed = () => app.moveSpeed *= 2;
+inputMap.listeners.onToggleRecording = () => {
+	app.isRecording = !app.isRecording;
+	if (app.isRecording) {
+		app.timeline.frames.length = 0;
+	}
+}
 
-function handleControls() {
-	const panAmount = 0.01 * VIEW_Y_SPAN * moveSpeed;
-	const zoomFactor = 0.95;
+function update(deltaTime: Duration) {
+	const panAmount = app.moveSpeed / buddhabrot.zoomLevel * deltaTime.seconds;
+	const zoomAmount = app.moveSpeed * deltaTime.seconds;
 
 	let didChange = false;
-	const consumeKey = (key: string) => {
-		const result = keysPressed.has(key);
-		if (result) didChange = true;
-		return result;
-	}
-
 	const velocity = Vec2.new(0, 0);
-	if (consumeKey('KeyW')) {
+	if (inputMap.up) {
 		velocity.y += panAmount;
+		didChange = true
 	}
-	if (consumeKey('KeyS')) {
+	if (inputMap.down) {
 		velocity.y -= panAmount;
+		didChange = true
 	}
-	if (consumeKey('KeyA')) {
-		velocity.x -= panAmount;
-	}
-	if (consumeKey('KeyD')) {
+	if (inputMap.right) {
 		velocity.x += panAmount;
+		didChange = true
 	}
-	if (consumeKey('ShiftLeft') || consumeKey('ShiftRight')) {
-		VIEW_Y_SPAN *= zoomFactor;
+	if (inputMap.left) {
+		velocity.x -= panAmount;
+		didChange = true
 	}
-	if (consumeKey('Space')) {
-		VIEW_Y_SPAN /= zoomFactor;
+	if (inputMap.zoomOut) {
+		buddhabrot.zoom += zoomAmount;
+		didChange = true
+	}
+	if (inputMap.zoomIn) {
+		buddhabrot.zoom -= zoomAmount;
+		didChange = true
 	}
 	
-	velocity.rotate(ROTATION);
+	velocity.rotate(buddhabrot.rotation);
 
 	const targetVector =
-		inputMode === 'c' ? VIEW_CENTER :
-		inputMode === 'z' ? INITIAL_Z :
-		EXPONENT;
+		buddhabrot.inputMode === 'c' ? buddhabrot.viewCenter :
+		buddhabrot.inputMode === 'z' ? buddhabrot.initialZ :
+		buddhabrot.exponent;
 
 	targetVector.add(velocity);
 
 	if (didChange) {
-		resetHistogram();
+		renderer.clearHistogram();
 	}
-}
-
-function resetHistogram() {
-	const elementCount = getHistogramElementCount(canvas.width, canvas.height);
-	device.queue.writeBuffer(
-		histogramBuffer,
-		0,
-		new Uint32Array(elementCount).fill(0)
-	);
-	//device.queue.writeBuffer(
-	//	smoothedHistogramBuffer,
-	//	0,
-	//	new Float32Array(elementCount).fill(0)
-	//);
 }
