@@ -23,14 +23,14 @@
 
 
 	<div class="mb-4">
-		The Buddhabrot traces the trajectory of points that escape the Mandelbrot fractal. It resembles the Seated Buddha when rotated by 90 degrees.
+		The Buddhabrot displays the trajectory of points that escape the Mandelbrot fractal. It resembles the Seated Buddha when rotated by 90 degrees.
 	</div>
 
 	<div class="mb-4">
 		To render the Buddhabrot:
 		<ol class="list-decimal ml-6 mb-4">
 			<li>
-				Randomly sample points in the complex plane.
+				Randomly sample points on the complex plane.
 			</li>
 			<li>
 				Test if each sample point <code>c</code> escapes to infinity under the Mandelbrot iteration:
@@ -40,7 +40,7 @@
 				</code>
 			</li>
 			<li>
-				For points that escape (i.e. are outside the Mandelbrot set), we increment the brightness of each pixel visited by <code>z</code> during the iteration.
+				For points that do escape (i.e. are outside the Mandelbrot set), we increment the brightness of each pixel visited by <code>z</code> during the iteration.
 			</li>
 		</ol>
 	</div>
@@ -51,7 +51,7 @@
 	</div>
 
 	<div class="mb-4">
-		The use of variable Julia points (initial <code>z</code>) and exponents (<code>e</code>) is inspired by <a href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" target="_blank" class="text-primary-500 hover:underline">2swap's</a> 6D generalization of the Mandelbrot Set.
+		Julia (<code>z₁</code>) and X (<code>e</code>) customization was inspired by <a href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" target="_blank" class="text-primary-500 hover:underline">2swap's</a> 6D generalization of the Mandelbrot Set.
 	</div>
 
 	<h2 class="text-xl text-onSurface font-bold mb-2">Similar Projects</h2>
