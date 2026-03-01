@@ -237,7 +237,7 @@
 					This application requires a browser that supports WebGPU.<br>
 					<br>
 					See <a 
-						href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#Browser_compatibility" 
+						href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#browser_compatibility" 
 						class="underline text-primary-500"
 						target="_blank"
 					>here</a> for a list of compatible browsers.
