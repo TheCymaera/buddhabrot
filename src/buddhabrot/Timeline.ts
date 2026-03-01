@@ -1,5 +1,5 @@
-import type { Buddhabrot } from "./buddhabrot.js";
-import { Duration } from "./open-utilities/Duration.js";
+import type { Buddhabrot } from "./Buddhabrot.js";
+import { Duration } from "../open-utilities/Duration.js";
 
 export interface Keyframe {
 	time: number;

@@ -2,14 +2,19 @@
 Subject to change.
 
 ## Record
-Press R to start/stop.
+1. Add `?record` to the URL to enable recording.
+2. Press R to start/stop.
 
 ## Export Recording
 ```javascript
+// settings
 const directory = await showDirectoryPicker({ mode: "readwrite" });
+const fps = 24;
+const totalFrames = Math.ceil(app.timeline.duration().seconds * fps);
+const samplesPerFrame = 2 ** 16;
 
-// disable automatic updates
-app.doUpdates = false;
+// disable main loop
+app.runMainLoop = false;
 await renderer.onFinish();
 
 // configure
@@ -18,20 +23,9 @@ renderer.setResolution({
 	height: 512,
 });
 
-const FPS = 24;
-const TOTAL_FRAMES = Math.ceil(app.timeline.duration().seconds * FPS);
-
-let previous = app.timeline.get(0);
-for (let i = 0; i < TOTAL_FRAMES; i++) {
-	const current = app.timeline.get(i / TOTAL_FRAMES);
-	current.samples = 2 ** 16;
-
-	let didClear = false;
-	if (!current.equals(previous)) {
-		renderer.clearHistogram();
-		didClear = true;
-	}
-	previous = current;
+for (let i = 0; i < totalFrames; i++) {
+	const current = app.timeline.get(i / totalFrames);
+	current.samples = samplesPerFrame;
 	
 	renderer.render(current);
 	await renderer.onFinish();
@@ -42,11 +36,11 @@ for (let i = 0; i < TOTAL_FRAMES; i++) {
 	await writable.write(await renderer.getImageBlob());
 	await writable.close();
 
-	console.log(`Exported frame ${i + 1} / ${TOTAL_FRAMES} ${didClear ? "(cleared histogram)" : ""}`);
+	console.log(`Exported frame ${i + 1} / ${totalFrames}`);
 }
 ```
 
-# Custom Timeline
+## Custom Timeline
 ```javascript
 const timeline = new Timeline();
 timeline.addKeyframe({
@@ -60,11 +54,10 @@ timeline.addKeyframe({
 });
 ```
 
-# High Quality Render
+## High Quality Render
 ```javascript
-// disable automatic updates
-app.doUpdates = false;
-renderer.clearHistogram();
+// disable main loop
+app.runMainLoop = false;
 await renderer.onFinish();
 
 // configure
@@ -78,7 +71,7 @@ buddhabrot.samples = 2 ** 17;
 buddhabrot.maxIterations = 20_000;
 
 buddhabrot.inputMode = "c"
-buddhabrot.seed = Buddhabrot.seedGenerator();
+buddhabrot.seed = Buddhabrot.createSeedGenerator();
 
 // progressively render in stages to prevent
 // the browser from freezing for too long.

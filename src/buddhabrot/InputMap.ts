@@ -1,3 +1,6 @@
+import { infoWindowOpened } from "../app-ui/AppInfo.svelte";
+import { InputMode } from "./Buddhabrot.js";
+
 const keysPressed = new Set<string>();
 
 export const inputMap = new class InputMap {
@@ -26,7 +29,7 @@ export const inputMap = new class InputMap {
 	}
 
 	readonly listeners = {
-		onInputModeChange: (mode: 'c' | 'z' | 'e') => {},
+		onInputModeChange: (mode: InputMode) => {},
 		onHalfSpeed: () => {},
 		onDoubleSpeed: () => {},
 		onToggleRecording: () => {},
@@ -35,18 +38,29 @@ export const inputMap = new class InputMap {
 
 
 addEventListener('keydown', (e) => {
+	// ignore if input is focused
+	if (document.activeElement instanceof HTMLInputElement ||
+		document.activeElement instanceof HTMLTextAreaElement) {
+		return;
+	}
+
+	// ignore if info page is open
+	if (infoWindowOpened()) {
+		return;
+	}
+
 	keysPressed.add(e.code);
 
 	if (e.code === 'Digit1') {
-		inputMap.listeners.onInputModeChange('c');
+		inputMap.listeners.onInputModeChange(InputMode.Mandelbrot);
 	}
 	
 	if (e.code === 'Digit2') {
-		inputMap.listeners.onInputModeChange('z');
+		inputMap.listeners.onInputModeChange(InputMode.Julia);
 	}
 	
 	if (e.code === 'Digit3') {
-		inputMap.listeners.onInputModeChange('e');
+		inputMap.listeners.onInputModeChange(InputMode.Exponent);
 	}
 
 	if (e.code === 'BracketLeft') {

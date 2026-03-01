@@ -5,6 +5,22 @@ export class Vec2 {
 		return new Vec2(x, y);
 	}
 
+	static X() {
+		return new Vec2(1, 0);
+	}
+
+	static Y() {
+		return new Vec2(0, 1);
+	}
+
+	static NEG_X() {
+		return new Vec2(-1, 0);
+	}
+
+	static NEG_Y() {
+		return new Vec2(0, -1);
+	}
+
 	constructor(public x: number, public y: number) { }
 
 	add(other: Vec2) {
@@ -43,5 +59,19 @@ export class Vec2 {
 
 	clone() {
 		return new Vec2(this.x, this.y);
+	}
+
+	equals(other: unknown) {
+		if (!(other instanceof Vec2)) return false;
+		return this.x === other.x && this.y === other.y;
+	}
+
+	normalize() {
+		const length = Math.sqrt(this.x * this.x + this.y * this.y);
+		if (length === 0) return undefined;
+
+		this.x /= length;
+		this.y /= length;
+		return this;
 	}
 }

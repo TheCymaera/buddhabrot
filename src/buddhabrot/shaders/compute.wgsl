@@ -4,11 +4,10 @@
 struct Params {
 	resolution : vec2<u32>,
 	samples_per_thread : u32,
-	min_iterations : u32,
 	max_iterations : u32,
+	max_iterations_2 : u32,
+	max_iterations_3 : u32,
 	seed : u32,
-	//sample_min : vec2<f32>,
-	//sample_max : vec2<f32>,
 	sample_center : vec2<f32>,
 	sample_radius : f32,
 	view_center : vec2<f32>,
@@ -39,19 +38,21 @@ fn random_u32(state: ptr<function, u32>) -> u32 {
 	return x;
 }
 
-fn random_f32(state: ptr<function, u32>) -> f32 {
+fn random_f32_unit(state: ptr<function, u32>) -> f32 {
 	let x = random_u32(state);
 	return f32(x) * (1.0 / 4294967296.0);
 }
 
-fn random_in_range(state: ptr<function, u32>, min: f32, max: f32) -> f32 {
-	return random_f32(state) * (max - min) + min;
+fn random_f32(state: ptr<function, u32>, min: f32, max: f32) -> f32 {
+	let range = max - min;
+	let x = random_u32(state);
+	return f32(x) * (range / 4294967296.0) + min;
 }
 
-fn complex_random(state: ptr<function, u32>, min: vec2<f32>, max: vec2<f32>) -> vec2<f32> {
-	let x = random_in_range(state, min.x, max.x);
-	let y = random_in_range(state, min.y, max.y);
-	return vec2<f32>(x, y);
+fn random_complex_delta(state: ptr<function, u32>, original: vec2<f32>, max_delta: f32) -> vec2<f32> {
+	let angle = random_f32(state, 0.0, 6.28318530718);
+	let radius = random_f32(state, 0.0, max_delta);
+	return original + vec2<f32>(cos(angle), sin(angle)) * radius;
 }
 
 fn complex_pow(z: vec2<f32>, e: vec2<f32>) -> vec2<f32> {
@@ -138,15 +139,9 @@ fn accumulate_orbit(
 		let pixel = world_to_pixel(z);
 
 		if (i <= params.max_iterations) { increment_pixel_channel(pixel, 0u); }
-		if (i <= params.max_iterations / 10u) { increment_pixel_channel(pixel, 1u); }
-		if (i <= params.max_iterations / 100u) { increment_pixel_channel(pixel, 2u); }
+		if (i <= params.max_iterations_2) { increment_pixel_channel(pixel, 1u); }
+		if (i <= params.max_iterations_3) { increment_pixel_channel(pixel, 2u); }
 	}
-}
-
-fn random_complex_delta(state: ptr<function, u32>, original: vec2<f32>, max_delta: f32) -> vec2<f32> {
-	let angle = random_in_range(state, 0.0, 6.28318530718);
-	let radius = random_in_range(state, 0.0, max_delta);
-	return original + vec2<f32>(cos(angle), sin(angle)) * radius;
 }
 
 @compute @workgroup_size(64)
@@ -166,8 +161,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 		
 		let i = count_iterations(z0, e, c);
 
-		let outside = i >= params.max_iterations || i < params.min_iterations;
-		if (outside) { continue; }
+		let inside = i >= params.max_iterations;
+		if (inside) { continue; }
 
 		accumulate_orbit(z0, e, c, i);
 	}

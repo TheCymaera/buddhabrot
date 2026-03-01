@@ -2,11 +2,10 @@
 struct Params {
 	resolution : vec2<u32>,
 	samples_per_thread : u32,
-	min_iterations : u32,
 	max_iterations : u32,
+	max_iterations_2 : u32,
+	max_iterations_3 : u32,
 	seed : u32,
-	//sample_min : vec2<f32>,
-	//sample_max : vec2<f32>,
 	sample_center : vec2<f32>,
 	sample_radius : f32,
 	view_center : vec2<f32>,

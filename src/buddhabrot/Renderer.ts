@@ -1,8 +1,8 @@
-import { Buddhabrot } from './buddhabrot.js';
+import { Buddhabrot } from './Buddhabrot.js';
 import COMPUTE_SHADER from './shaders/compute.wgsl?raw';
 import RENDER_SHADER from './shaders/render.wgsl?raw';
 import LERP_SHADER from './shaders/lerp.wgsl?raw';
-import { Struct } from './struct.js';
+import { Struct } from './Struct.js';
 
 const WORKGROUP_SIZE = parseInt(COMPUTE_SHADER.match(/@workgroup_size\((\d+)\)/)?.[1]!);
 if (!isFinite(WORKGROUP_SIZE)) throw new Error('Failed to parse workgroup size from compute shader.');
@@ -53,6 +53,8 @@ async function createPipelines(device: GPUDevice, format: GPUTextureFormat) {
 
 
 export class Renderer {
+	autoClearHistogram = true;
+
 	/**
 	 * Re-created on resolution change.
 	 */
@@ -111,7 +113,17 @@ export class Renderer {
 		return out;
 	}
 
+	#previousBuddhabrot?: Buddhabrot;
 	render(buddhabrot: Buddhabrot) {
+		if (this.autoClearHistogram && 
+			this.#previousBuddhabrot && 
+			!this.#previousBuddhabrot?.canReuseHistogram(buddhabrot)) {
+			this.clearHistogram();
+		}
+
+		this.#previousBuddhabrot = buddhabrot.clone();
+
+
 		if (!this.#transient) this.#transient = this.#createTransientResources();
 
 		const workgroupCount = Math.ceil(buddhabrot.samples / WORKGROUP_SIZE);
@@ -159,6 +171,10 @@ export class Renderer {
 	}
 
 	setResolution({ width, height }: { width: number, height: number }) {
+		if (this.canvas.width === width && this.canvas.height === height) {
+			return;
+		}
+
 		this.canvas.width = width;
 		this.canvas.height = height;
 
@@ -287,8 +303,9 @@ export class Renderer {
 		return new Struct()
 			.vec2_u32([resolution.width, resolution.height])
 			.u32(samplesPerThread)
-			.u32(buddhabrot.minIterations)
-			.u32(buddhabrot.maxIterations)
+			.u32(buddhabrot.maxIterations1)
+			.u32(buddhabrot.maxIterations2)
+			.u32(buddhabrot.maxIterations3)
 			.u32(buddhabrot.seed())
 			.vec2_f32([buddhabrot.sampleCenter.x, buddhabrot.sampleCenter.y])
 			.f32(buddhabrot.sampleRadius)
@@ -296,13 +313,13 @@ export class Renderer {
 			.vec2_f32([buddhabrot.initialZ.x, buddhabrot.initialZ.y])
 			.vec2_f32([buddhabrot.exponent.x, buddhabrot.exponent.y])
 			.f32(buddhabrot.rotation)
-			.f32(buddhabrot.viewYSpan())
+			.f32(buddhabrot.viewYSpan)
 			.f32(resolution.width / Math.max(resolution.height, 1))
-			.f32(buddhabrot.escapeRadius ** 2)
+			.f32(buddhabrot.bailoutRadius ** 2)
 			.f32(buddhabrot.gamma)
-			.f32(buddhabrot.histogramLerp)
-			.f32(buddhabrot.inputMode === 'z' ? buddhabrot.zIndicatorSize / buddhabrot.zoomLevel : 0)
-			.f32(buddhabrot.inputMode === 'e' ? buddhabrot.eIndicatorSize / buddhabrot.zoomLevel : 0)
+			.f32(buddhabrot.frameLerp)
+			.f32(buddhabrot.effectiveZIndicatorSize / buddhabrot.zoomLevel)
+			.f32(buddhabrot.effectiveEIndicatorSize / buddhabrot.zoomLevel)
 			.pack();
 	}
 }

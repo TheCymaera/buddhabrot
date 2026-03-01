@@ -1,24 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover" />
+
+	<!-- pwa -->
+	<!--<link rel="manifest" href="./manifest.json">-->
+	<meta name="theme-color" content="#222">
+	<!--<link rel="apple-touch-icon" href="./assets/images/icon-bg-512.png">-->
+	<!--<meta name="apple-mobile-web-app-status-bar-style" content="default" />-->
+	<!--<meta name="apple-mobile-web-app-capable" content="yes" />-->
+
+	<!-- title & favicon -->
+	<title>Buddhabrot Explorer</title>
+	<link rel="icon" href="/favicon.png" type="image/png"/>
+	
+	<!-- info -->
+	<meta name="author" content="Morgan"/>
+	<meta name="description" content="Explore the Buddhabrot fractal with customizable initial Z and exponents."/>
+	<meta name="keywords" content="Heledron, Hadron, Cymaera"/>
+	
+	<!-- sharing -->
+	<meta property="og:title" content="Buddhabrot Explorer"/>
+	<meta property="og:description" content="Explore the Buddhabrot fractal with customizable initial Z and exponents."/>
+	<meta property="og:url"   content="http://heledron.com/misc/buddhabrot/"/>
+	<meta property="og:image" content="http://heledron.com/misc/buddhabrot/thumbnail.webp"/>
+	<meta property="og:type"  content="website"/>
+
+	<!-- styles & scripts -->
 	<script type="module" src="./src/main.ts"></script>
 </head>
 <body>
-	<canvas
-		class="fixed inset-0 w-full h-full bg-black"
-	></canvas>
-
-	<div
-		id="recordingIndicator"
-		class="fixed top-2 left-2 text-white gap-3 flex items-center"
-	>
-		<div class="bg-red-500 w-4 h-4 rounded-full animate-pulse"></div>
-		<span>
-			<span id="recordingIndicator_frameCount">0</span> frames
-		</span>
-	</div>
+	<div class="SvelteOutlet contents"></div>
 </body>
 </html>
