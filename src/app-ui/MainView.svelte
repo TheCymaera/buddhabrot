@@ -28,7 +28,7 @@
 	let rendererInitError: Error | undefined = $state(undefined);
 
 	const resolution = $state({
-		height: "1024",
+		height: "Auto",
 		width: "Auto",
 	});
 
@@ -62,6 +62,7 @@
 		// init resolution
 		const dpr = window.devicePixelRatio || 1;
 		const height = (Math.min(1024, clientDimensions.height * dpr) | 0) || 1;
+
 		resolution.height = height.toString();
 		resolution.width = "Auto";
 
@@ -80,19 +81,16 @@
 	});
 
 
-	function calculateResolution(
-		resolution: { width: string, height: string },
-		client: { width: number, height: number }
-	) {
-		const aspectRatio = (client.width / Math.max(client.height, 1)) || 1;
+	function calculateResolution() {
+		const aspectRatio = (clientDimensions.width / Math.max(clientDimensions.height, 1)) || 1;
 		const dpr = window.devicePixelRatio || 1;
 		
 		const widthSetting = parseInt(resolution.width) || undefined;
 		const heightSetting = parseInt(resolution.height) || undefined;
 
 		if (!widthSetting && !heightSetting) return {
-			width: Math.floor(client.width * dpr),
-			height: Math.floor(client.height * dpr),
+			width: Math.floor(clientDimensions.width * dpr),
+			height: Math.floor(clientDimensions.height * dpr),
 		}
 
 		if (heightSetting && !widthSetting) {
@@ -115,7 +113,7 @@
 	};
 
 	$effect(()=>{
-		const { width, height, useContainFit } = calculateResolution(resolution, clientDimensions);
+		const { width, height, useContainFit } = calculateResolution();
 		
 		if (clientDimensions.width === 0 || clientDimensions.height === 0) return;
 		if (!app.runMainLoop) return;
