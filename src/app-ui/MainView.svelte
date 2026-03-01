@@ -72,9 +72,10 @@
 			renderer,
 			Vec2,
 			Buddhabrot,
-			AnimationFrameScheduler,
 			Duration,
 			Timeline,
+			InputMode,
+			IndicatorSetting,
 			inputMap,
 			app,
 		});

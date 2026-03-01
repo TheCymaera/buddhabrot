@@ -1,6 +1,8 @@
 # API
 Subject to change.
 
+Run in the browser console.
+
 ## Record
 1. Add `?record` to the URL to enable recording.
 2. Press R to start/stop.
@@ -17,7 +19,7 @@ const samplesPerFrame = 2 ** 16;
 app.runMainLoop = false;
 await renderer.onFinish();
 
-// configure
+// set resolution
 renderer.setResolution({
 	width: 512,
 	height: 512,
@@ -60,7 +62,7 @@ timeline.addKeyframe({
 app.runMainLoop = false;
 await renderer.onFinish();
 
-// configure
+// set resolution
 renderer.setResolution({
 	width: 2048,
 	height: 2048,
@@ -69,8 +71,6 @@ renderer.setResolution({
 const totalSamples = 2 ** 20;
 buddhabrot.samples = 2 ** 17;
 buddhabrot.maxIterations = 20_000;
-
-buddhabrot.inputMode = "c"
 buddhabrot.seed = Buddhabrot.createSeedGenerator();
 
 // progressively render in stages to prevent

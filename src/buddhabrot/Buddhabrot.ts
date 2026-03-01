@@ -2,15 +2,15 @@ import { lerpNumber } from "../open-utilities/numbers.js";
 import { Vec2 } from "../open-utilities/Vec2.js";
 
 export enum InputMode {
-	Mandelbrot,
-	Julia,
-	Exponent,
+	Mandelbrot = "Mandelbrot",
+	Julia = "Julia",
+	Exponent = "Exponent",
 }
 
 export enum IndicatorSetting {
-	Never,
-	Always,
-	WhenToolSelected,
+	Never = "Never",
+	Always = "Always",
+	WhenToolSelected = "WhenToolSelected",
 }
 
 export class Buddhabrot {
