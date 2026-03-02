@@ -23,35 +23,46 @@
 
 
 	<div class="mb-4">
-		The Buddhabrot displays the trajectory of points that escape the Mandelbrot fractal. It resembles the Seated Buddha when rotated by 90 degrees.
+		The Buddhabrot (Nebulabrot) displays the trajectory of points that escape the Mandelbrot set. It resembles the Seated Buddha when rotated 90 degrees.
 	</div>
 
+
+	<h2 class="text-xl text-onSurface font-bold mb-2">How to render a Buddhabrot</h2>
 	<div class="mb-4">
-		To render the Buddhabrot:
 		<ol class="list-decimal ml-6 mb-4">
 			<li>
-				Randomly sample points on the complex plane.
+				Randomly select points on the complex plane.
 			</li>
 			<li>
-				Test if each sample point <code>c</code> escapes to infinity under the Mandelbrot iteration:
-
-				<code class="block p-3">
+				Iterate each sample point <code>c</code> by the Mandelbrot recurrence to see whether it escapes to infinity:
+				<code class="block p-3 mb-1">
 					z = z ^ e + c
 				</code>
 			</li>
 			<li>
-				For points that do escape (i.e. are outside the Mandelbrot set), we increment the brightness of each pixel visited by <code>z</code> during the iteration.
+				If a point escapes (i.e. it is not in the Mandelbrot set), iterate a second time and increment the brightness of each pixel visited by <code>z</code>.
 			</li>
 		</ol>
 	</div>
 
 
+	<h2 class="text-xl text-onSurface font-bold mb-2">Customization</h2>
 	<div class="mb-4">
-		To create multicolored Buddhabrots, we can use different max iteration counts for the red, green, and blue channels.
+		To create multicolored Buddhabrots, we can use a different max iteration value for the red, green, and blue channels.
 	</div>
 
 	<div class="mb-4">
-		Julia (<code>z₁</code>) and X (<code>e</code>) customization was inspired by <a href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" target="_blank" class="text-primary-500 hover:underline">2swap's</a> 6D generalization of the Mandelbrot Set.
+		An Anti-Buddhabrot is rendered by tracing the trajectories of points that do not escape, instead of those that do.
+	</div>
+
+	<div class="mb-4">
+		The parameters Julia (<code>z₁</code>) and X (<code>e</code>) were inspired by <a href="https://www.youtube.com/watch?v=Ed1gsyxxwM0" target="_blank" class="text-primary-500 hover:underline">2swap's</a> 6D generalization of the Mandelbrot Set.
+	</div>
+
+
+	<h2 class="text-xl text-onSurface font-bold mb-2">Technical</h2>
+	<div class="mb-4">
+		This app uses the experimental WebGPU API to compute thousands of trajectories in parallel via a compute shader.
 	</div>
 
 	<h2 class="text-xl text-onSurface font-bold mb-2">Similar Projects</h2>

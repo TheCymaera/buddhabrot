@@ -146,6 +146,7 @@
 		//}
 
 		if (!app.runMainLoop) return;
+		if (location.hash === "#info") return;
 
 		update(deltaTime);
 		renderer?.render(buddhabrot);
