@@ -605,6 +605,14 @@
 				value={buddhabrot.gamma}
 				onInput={e => buddhabrot.gamma = e.value}
 			/>
+			<NumberField
+				label="Normalization Floor"
+				value={buddhabrot.normalizationFloor}
+				onInput={e => buddhabrot.normalizationFloor = e.value}
+				hint={
+					`Darkens images when sample counts are low. Prevents bright flashes when a new histogram is created.`
+				}
+			/>
 			<NumberField 
 				label="Frame Interpolation"
 				value={buddhabrot.frameLerp}
@@ -612,15 +620,6 @@
 				hint={
 					`0 = no interpolation, 1 = full interpolation\n`+
 					`Higher values reduce flickering but can cause ghosting`
-				}
-			/>
-			<NumberField
-				label="Normalization Floor"
-				value={buddhabrot.normalizationFloor}
-				onInput={e => buddhabrot.normalizationFloor = e.value}
-				hint={
-					`Minimum value used when normalizing image values. ` +
-					`Higher values reduce flashing when a new histogram is created.`
 				}
 			/>
 		</div>

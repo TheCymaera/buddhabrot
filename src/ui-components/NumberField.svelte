@@ -84,7 +84,7 @@
 			{@render leadingIcon?.()}
 		</div>
 	</div>
-	<output class="block pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
+	<output class="block mt-0.5 pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
 		<small class="block whitespace-pre-wrap {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
 	</output>
 </div>

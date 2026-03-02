@@ -51,8 +51,8 @@
 			{@render trailingIcon?.()}
 		</div>
 	</div>
-	<output class="pl-1" style:display={(error || hint) ? "" : "none"}>
-		<small class="whitespace-pre {error ? "text-red-500" : ""}">{error || hint}</small>
+	<output class="block mt-0.5 pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
+		<small class="block whitespace-pre-wrap {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
 	</output>
 </helion-text-field>
 
