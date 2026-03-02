@@ -85,7 +85,7 @@
 		</div>
 	</div>
 	<output class="block pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
-		<small class="block whitespace-pre {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
+		<small class="block whitespace-pre-wrap {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
 	</output>
 </div>
 <style>

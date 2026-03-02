@@ -17,9 +17,10 @@ struct Params {
 	view_aspect_ratio : f32,
 	escape_radius_sq : f32,
 	gamma : f32,
-	histogram_lerp : f32,
+	frame_lerp : f32,
 	z_indicator_size : f32,
 	e_indicator_size : f32,
+	normalization_floor : f32,
 };
 
 @group(0) @binding(0) var<storage, read> histogram : array<u32>;
@@ -35,8 +36,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 		return;
 	}
 
-	let t = clamp(params.histogram_lerp, 0.0, 1.0);
-	let curr = f32(histogram[index]);
-	let prev = lerped[index];
-	lerped[index] = mix(prev, curr, t);
+	let t = clamp(params.frame_lerp, 0.0, 1.0);
+	let current = f32(histogram[index]);
+	let previous = lerped[index];
+	lerped[index] = mix(current, previous, t);
 }

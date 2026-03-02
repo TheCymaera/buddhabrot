@@ -614,6 +614,15 @@
 					`Higher values reduce flickering but can cause ghosting`
 				}
 			/>
+			<NumberField
+				label="Normalization Floor"
+				value={buddhabrot.normalizationFloor}
+				onInput={e => buddhabrot.normalizationFloor = e.value}
+				hint={
+					`Minimum value used when normalizing image values. ` +
+					`Higher values reduce flashing when a new histogram is created.`
+				}
+			/>
 		</div>
 	</div>
 {/snippet}

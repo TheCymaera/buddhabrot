@@ -54,6 +54,8 @@ export class Buddhabrot {
 	gamma = 4.0;
 	frameLerp = 0;
 
+	normalizationFloor = 15;
+
 	get zoomLevel() {
 		return Math.pow(2, this.zoom);
 	}
