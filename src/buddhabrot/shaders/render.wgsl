@@ -1,5 +1,6 @@
 
 struct Params {
+	anti : u32, // 0 | 1; booleans not supported
 	resolution : vec2<u32>,
 	samples_per_thread : u32,
 	max_iterations : u32,
@@ -8,6 +9,7 @@ struct Params {
 	seed : u32,
 	sample_center : vec2<f32>,
 	sample_radius : f32,
+	sample_uniform_distribution : u32, // 0 | 1
 	view_center : vec2<f32>,
 	initial_z : vec2<f32>,
 	exponent : vec2<f32>,

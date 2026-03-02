@@ -54,6 +54,7 @@ async function createPipelines(device: GPUDevice, format: GPUTextureFormat) {
 
 export class Renderer {
 	autoClearHistogram = true;
+	alwaysClearHistogram = false;
 
 	/**
 	 * Re-created on resolution change.
@@ -115,7 +116,8 @@ export class Renderer {
 
 	#previousBuddhabrot?: Buddhabrot;
 	render(buddhabrot: Buddhabrot) {
-		if (this.autoClearHistogram && 
+		if (this.alwaysClearHistogram ||
+			this.autoClearHistogram && 
 			this.#previousBuddhabrot && 
 			!this.#previousBuddhabrot?.canReuseHistogram(buddhabrot)) {
 			this.clearHistogram();
@@ -301,6 +303,7 @@ export class Renderer {
 		const samplesPerThread = Math.ceil(buddhabrot.samples / workgroupCount);
 		
 		return new Struct()
+			.u32(buddhabrot.anti ? 1 : 0)
 			.vec2_u32([resolution.width, resolution.height])
 			.u32(samplesPerThread)
 			.u32(buddhabrot.maxIterations1)
@@ -309,6 +312,7 @@ export class Renderer {
 			.u32(buddhabrot.seed())
 			.vec2_f32([buddhabrot.sampleCenter.x, buddhabrot.sampleCenter.y])
 			.f32(buddhabrot.sampleRadius)
+			.u32(buddhabrot.uniformSampleDistribution ? 1 : 0)
 			.vec2_f32([buddhabrot.viewCenter.x, buddhabrot.viewCenter.y])
 			.vec2_f32([buddhabrot.initialZ.x, buddhabrot.initialZ.y])
 			.vec2_f32([buddhabrot.exponent.x, buddhabrot.exponent.y])

@@ -2,6 +2,7 @@
 @group(0) @binding(1) var<uniform> params : Params;
 
 struct Params {
+	anti : u32, // 0 | 1; booleans not supported
 	resolution : vec2<u32>,
 	samples_per_thread : u32,
 	max_iterations : u32,
@@ -10,6 +11,7 @@ struct Params {
 	seed : u32,
 	sample_center : vec2<f32>,
 	sample_radius : f32,
+	sample_uniform_distribution : u32, // 0 | 1
 	view_center : vec2<f32>,
 	initial_z : vec2<f32>,
 	exponent : vec2<f32>,
@@ -49,10 +51,16 @@ fn random_f32(state: ptr<function, u32>, min: f32, max: f32) -> f32 {
 	return f32(x) * (range / 4294967296.0) + min;
 }
 
-fn random_complex_delta(state: ptr<function, u32>, original: vec2<f32>, max_delta: f32) -> vec2<f32> {
-	let angle = random_f32(state, 0.0, 6.28318530718);
-	let radius = random_f32(state, 0.0, max_delta);
-	return original + vec2<f32>(cos(angle), sin(angle)) * radius;
+fn random_complex_delta(state: ptr<function, u32>, center: vec2<f32>, radius: f32) -> vec2<f32> {
+	let is_uniform = params.sample_uniform_distribution != 0u;
+
+	let u1 = random_f32_unit(state);
+	var u2 = random_f32_unit(state);
+	if (is_uniform) { u2 = sqrt(u2); }
+
+	let theta = 6.28318530718 * u1;
+	let r = radius * u2;
+	return center + vec2<f32>(cos(theta), sin(theta)) * r;
 }
 
 fn complex_pow(z: vec2<f32>, e: vec2<f32>) -> vec2<f32> {
@@ -162,7 +170,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 		let i = count_iterations(z0, e, c);
 
 		let inside = i >= params.max_iterations;
-		if (inside) { continue; }
+		let anti = params.anti != 0u;
+		if (inside != anti) { continue; }
 
 		accumulate_orbit(z0, e, c, i);
 	}

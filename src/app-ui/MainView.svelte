@@ -19,6 +19,7 @@
 	import { inputMap } from '../buddhabrot/InputMap.js';
 	import { degToRad, radToDeg } from '../open-utilities/numbers.js';
 	import TextField from '../ui-components/TextField.svelte';
+	import ToggleSwitchField from '../ui-components/ToggleSwitchField.svelte';
 
 	let canvas: HTMLCanvasElement;
 	const clientDimensions = $state({ width: 0, height: 0 });
@@ -48,6 +49,7 @@
 		app,
 		buddhabrot
 	})
+
 
 	tick().then(async () => {
 		// create renderer
@@ -79,6 +81,10 @@
 			inputMap,
 			app,
 		});
+
+		//renderer!.alwaysClearHistogram = true
+		//buddhabrot.anti = true
+		//buddhabrot.seed = ()=>1;
 	});
 
 
@@ -482,6 +488,14 @@
 {#snippet renderSettings()}
 	<!-- Render settings -->
 	<div class="mb-6">
+		<h3 class="text-lg font-semibold mb-2">Mode</h3>
+		<ToggleSwitchField
+			label="Anti Buddhabrot"
+			className="mb-4"
+			checked={reactive.buddhabrot.anti}
+			onChange={e => reactive.buddhabrot.anti = e.checked}
+		/>
+
 		<h3 class="text-lg font-semibold mb-2">Indicators</h3>
 		<div class="grid grid-cols-2 gap-2 mb-2">
 			<NumberField 
@@ -569,6 +583,14 @@
 				label="Sample Radius"
 				value={buddhabrot.sampleRadius}
 				onInput={e => buddhabrot.sampleRadius = e.value}
+			/>
+
+
+			<ToggleSwitchField
+				label="Uniform Sample Distribution"
+				className="my-2"
+				checked={reactive.buddhabrot.uniformSampleDistribution}
+				onChange={e => reactive.buddhabrot.uniformSampleDistribution = e.checked}
 			/>
 		</div>
 	</div>

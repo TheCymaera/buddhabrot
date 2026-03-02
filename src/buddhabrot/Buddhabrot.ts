@@ -22,9 +22,12 @@ export class Buddhabrot {
 		}
 	}
 
+	anti = false;
+
 	inputMode: InputMode = InputMode.Mandelbrot;
 
 	samples = 2 ** 12;
+	uniformSampleDistribution = true;
 	maxIterations1 = 1000;
 	maxIterations2 = this.maxIterations1 / 10;
 	maxIterations3 = this.maxIterations1 / 100;
@@ -92,6 +95,8 @@ export class Buddhabrot {
 
 	canReuseHistogram(other: Buddhabrot) {
 		return (
+			this.anti === other.anti &&
+			this.uniformSampleDistribution === other.uniformSampleDistribution &&
 			this.zoom === other.zoom &&
 			this.viewCenter.equals(other.viewCenter) &&
 			this.rotation === other.rotation &&
