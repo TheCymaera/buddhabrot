@@ -31,8 +31,8 @@
 	--color-containerBorder: #FFFFFF22;
 	--color-divider: #FFFFFF22;
 
-	--color-toggleSwitchTrackColor: #FFFFFF33;
-	--color-toggleSwitchThumbColor: #000;
+	--color-toggleSwitchTrackColor: #000;
+	--color-toggleSwitchThumbColor: #fff;
 
 	--outline-width: 3px;
 }

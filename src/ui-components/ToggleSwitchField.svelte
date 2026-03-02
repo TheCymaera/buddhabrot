@@ -59,7 +59,7 @@
 	--helion-ToggleSwitch-trackHeight: 1.5em;
 	--helion-ToggleSwitch-trackWidth: 2.5em;
 	
-	--helion-ToggleSwitch-thumbSize: calc(var(--helion-ToggleSwitch-trackHeight) * .8);
+	--helion-ToggleSwitch-thumbSize: calc(var(--helion-ToggleSwitch-trackHeight) * .78);
 
 	--helion-ToggleSwitch-splashSize: 3em;
 	--helion-ToggleSwitch-splashOpacity: .15;
