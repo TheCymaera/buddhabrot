@@ -2,7 +2,7 @@ struct Params {
 	anti : u32, // 0 | 1; booleans not supported
 	resolution : vec2<u32>,
 	samples_per_thread : u32,
-	max_iterations : u32,
+	max_iterations_1 : u32,
 	max_iterations_2 : u32,
 	max_iterations_3 : u32,
 	seed : u32,

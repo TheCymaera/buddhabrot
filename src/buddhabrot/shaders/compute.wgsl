@@ -5,7 +5,7 @@ struct Params {
 	anti : u32, // 0 | 1; booleans not supported
 	resolution : vec2<u32>,
 	samples_per_thread : u32,
-	max_iterations : u32,
+	max_iterations_1 : u32,
 	max_iterations_2 : u32,
 	max_iterations_3 : u32,
 	seed : u32,
@@ -107,11 +107,11 @@ fn world_to_pixel(p: vec2<f32>) -> vec2<i32> {
 	return vec2<i32>(px, py);
 }
 
-fn count_iterations(z0: vec2<f32>, e: vec2<f32>, c: vec2<f32>) -> u32 {
+fn count_iterations(z0: vec2<f32>, e: vec2<f32>, c: vec2<f32>, max_iterations: u32) -> u32 {
 	var iterations = 0u;
 	
 	var z = z0;
-	while (iterations < params.max_iterations) {
+	while (iterations < max_iterations) {
 		z = complex_pow(z, e) + c;
 		iterations++;
 
@@ -146,7 +146,7 @@ fn accumulate_orbit(
 		z = complex_pow(z, e) + c;
 		let pixel = world_to_pixel(z);
 
-		if (i <= params.max_iterations) { increment_pixel_channel(pixel, 0u); }
+		if (i <= params.max_iterations_1) { increment_pixel_channel(pixel, 0u); }
 		if (i <= params.max_iterations_2) { increment_pixel_channel(pixel, 1u); }
 		if (i <= params.max_iterations_3) { increment_pixel_channel(pixel, 2u); }
 	}
@@ -162,14 +162,16 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
 	let sample_count = params.samples_per_thread;
 
+	let max_iterations = max(params.max_iterations_1, max(params.max_iterations_2, params.max_iterations_3));
+
 	for (var s = 0u; s < sample_count; s++) {
 		let z0 = params.initial_z;
 		let e = params.exponent;
 		let c = random_complex_delta(&seed, params.sample_center, params.sample_radius);
 		
-		let i = count_iterations(z0, e, c);
+		let i = count_iterations(z0, e, c, max_iterations);
 
-		let inside = i >= params.max_iterations;
+		let inside = i >= max_iterations;
 		let anti = params.anti != 0u;
 		if (inside != anti) { continue; }
 
