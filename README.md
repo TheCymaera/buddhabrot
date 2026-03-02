@@ -70,7 +70,9 @@ renderer.setResolution({
 
 const totalSamples = 2 ** 20;
 buddhabrot.samples = 2 ** 17;
-buddhabrot.maxIterations = 20_000;
+buddhabrot.maxIterations1 = 20_000;
+buddhabrot.maxIterations2 = buddhabrot.maxIterations1 / 10;
+buddhabrot.maxIterations3 = buddhabrot.maxIterations1 / 20;
 buddhabrot.seed = Buddhabrot.createSeedGenerator();
 
 // progressively render in stages to prevent
@@ -83,5 +85,5 @@ for (let i = 0; i < stages; i++) {
 	console.log(`Rendered ${i + 1} / ${stages}`);
 }
 
-console.log(`Samples = ${totalSamples} (${stages} stages), Iterations = ${buddhabrot.maxIterations}`);
+console.log(`Samples = ${totalSamples} (${stages} stages), Iterations = ${buddhabrot.maxIterations1}`);
 ```
