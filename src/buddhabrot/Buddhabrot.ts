@@ -49,7 +49,7 @@ export class Buddhabrot {
 	seed = Buddhabrot.createSeedGenerator();
 
 	gamma = 4.0;
-	frameLerp = 1;
+	frameLerp = 0;
 
 	get zoomLevel() {
 		return Math.pow(2, this.zoom);

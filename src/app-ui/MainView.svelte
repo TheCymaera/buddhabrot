@@ -126,8 +126,18 @@
 	});
 
 	// main loop
+	//let isCalibrating = true;
+	buddhabrot.samples = 2048;
 	AnimationFrameScheduler.loop((deltaTime) => {
 		reactive = {...reactive};
+
+		//if (isCalibrating) {
+		//	if (deltaTime.seconds < 1 / 20 && buddhabrot.samples < 4096) {
+		//		buddhabrot.samples *= 2;
+		//	}
+
+		//	isCalibrating = false;
+		//}
 
 		if (!app.runMainLoop) return;
 
@@ -189,6 +199,15 @@
 
 		targetVector.add(velocity);
 	}
+
+	buddhabrot.maxIterations1 = 500;
+	const relativeIterations = $state({
+		green: .1,
+		blue: .01,
+	});
+
+	$effect(()=>{ buddhabrot.maxIterations2 = Math.round(relativeIterations.green * reactive.buddhabrot.maxIterations1) });
+	$effect(()=>{ buddhabrot.maxIterations3 = Math.round(relativeIterations.blue * reactive.buddhabrot.maxIterations1) });
 
 	let sidebarOpen = $state(true);
 
@@ -517,22 +536,19 @@
 				label="Red"
 				value={buddhabrot.maxIterations1}
 				onInput={e => buddhabrot.maxIterations1 = e.value}
+				hint={`${reactive.buddhabrot.maxIterations1}`}
 			/>
 
 			<NumberField 
 				label="Green ~"
-				bind:value={
-					()=>buddhabrot.maxIterations2 / buddhabrot.maxIterations1,
-					v=>buddhabrot.maxIterations2 = v * buddhabrot.maxIterations1
-				}
+				bind:value={relativeIterations.green}
+				hint={`${reactive.buddhabrot.maxIterations2}`}
 			/>
 
 			<NumberField 
 				label="Blue ~"
-				bind:value={
-					()=>buddhabrot.maxIterations3 / buddhabrot.maxIterations1,
-					v=>buddhabrot.maxIterations3 = v * buddhabrot.maxIterations1
-				}
+				bind:value={relativeIterations.blue}
+				hint={`${reactive.buddhabrot.maxIterations3}`}
 			/>
 		</div>
 
@@ -570,6 +586,10 @@
 				label="Frame Interpolation"
 				value={buddhabrot.frameLerp}
 				onInput={e => buddhabrot.frameLerp = e.value}
+				hint={
+					`0 = no interpolation, 1 = full interpolation\n`+
+					`Higher values reduce flickering but can cause ghosting`
+				}
 			/>
 		</div>
 	</div>

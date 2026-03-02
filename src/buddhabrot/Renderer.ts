@@ -317,7 +317,7 @@ export class Renderer {
 			.f32(resolution.width / Math.max(resolution.height, 1))
 			.f32(buddhabrot.bailoutRadius ** 2)
 			.f32(buddhabrot.gamma)
-			.f32(buddhabrot.frameLerp)
+			.f32(1 - buddhabrot.frameLerp)
 			.f32(buddhabrot.effectiveZIndicatorSize / buddhabrot.zoomLevel)
 			.f32(buddhabrot.effectiveEIndicatorSize / buddhabrot.zoomLevel)
 			.pack();
