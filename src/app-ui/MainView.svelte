@@ -21,20 +21,6 @@
 	import TextField from '../ui-components/TextField.svelte';
 	import ToggleSwitchField from '../ui-components/ToggleSwitchField.svelte';
 
-	let canvas: HTMLCanvasElement;
-	const clientDimensions = $state({ width: 0, height: 0 });
-	
-	const buddhabrot = new Buddhabrot();
-	let renderer: Renderer | undefined = undefined;
-	let rendererInitError: Error | undefined = $state(undefined);
-
-	const resolution = $state({
-		height: "Auto",
-		width: "Auto",
-	});
-
-	const recordingIsEnabled = window.location.search.includes("record");
-
 	// svelte-ignore perf_avoid_inline_class
 	const app = new class App {
 		moveSpeed = 1;
@@ -45,11 +31,38 @@
 		lastFrameTime = performance.now();
 	}
 
+	let canvas: HTMLCanvasElement;
+	const clientDimensions = $state({ width: 0, height: 0 });
+	
+	const buddhabrot = new Buddhabrot();
+	let renderer: Renderer | undefined = undefined;
+	let rendererInitError: Error | undefined = $state(undefined);
+
 	let reactive = $state({
 		app,
+		renderer: undefined as Renderer | undefined,
 		buddhabrot
 	})
 
+	const resolution = $state({
+		height: "Auto",
+		width: "Auto",
+	});
+
+	const iterationSettings = $state({
+		maxIterations: 500,
+		red: 1,
+		green: .1,
+		blue: .01,
+	});
+
+	$effect(()=>{ buddhabrot.maxIterations1 = Math.round(iterationSettings.maxIterations * Math.min(iterationSettings.red, 1)) });
+	$effect(()=>{ buddhabrot.maxIterations2 = Math.round(iterationSettings.maxIterations * Math.min(iterationSettings.green, 1)) });
+	$effect(()=>{ buddhabrot.maxIterations3 = Math.round(iterationSettings.maxIterations * Math.min(iterationSettings.blue, 1)) });
+
+	buddhabrot.samples = 2000;
+
+	const recordingIsEnabled = window.location.search.includes("record");
 
 	tick().then(async () => {
 		// create renderer
@@ -59,6 +72,7 @@
 			rendererInitError = result;
 		} else {
 			renderer = result;
+			reactive.renderer = renderer;
 		}
 
 		// init resolution
@@ -133,7 +147,6 @@
 
 	// main loop
 	//let isCalibrating = true;
-	buddhabrot.samples = 2048;
 	AnimationFrameScheduler.loop((deltaTime) => {
 		reactive = {...reactive};
 
@@ -206,15 +219,6 @@
 
 		targetVector.add(velocity);
 	}
-
-	buddhabrot.maxIterations1 = 500;
-	const relativeIterations = $state({
-		green: .1,
-		blue: .01,
-	});
-
-	$effect(()=>{ buddhabrot.maxIterations2 = Math.round(relativeIterations.green * reactive.buddhabrot.maxIterations1) });
-	$effect(()=>{ buddhabrot.maxIterations3 = Math.round(relativeIterations.blue * reactive.buddhabrot.maxIterations1) });
 
 	let sidebarOpen = $state(true);
 
@@ -545,25 +549,33 @@
 
 	<div class="mb-6">
 		<h3 class="text-lg font-semibold mb-2">Iteration Settings</h3>
+		<div class="grid gap-2 mb-2">
+			<NumberField 
+				label="Max Iterations"
+				bind:value={iterationSettings.maxIterations}
+			/>
+		</div>
 
 		<div class="grid gap-2 grid-cols-3 mb-2">
 			<NumberField 
 				label="Red"
-				value={buddhabrot.maxIterations1}
-				onInput={e => buddhabrot.maxIterations1 = e.value}
-				hint={`${reactive.buddhabrot.maxIterations1}`}
+				hideLabel={true}
+				bind:value={iterationSettings.red}
+				hint={`Red: ${reactive.buddhabrot.maxIterations1}`}
 			/>
 
 			<NumberField 
-				label="Green ~"
-				bind:value={relativeIterations.green}
-				hint={`${reactive.buddhabrot.maxIterations2}`}
+				label="Green"
+				hideLabel={true}
+				bind:value={iterationSettings.green}
+				hint={`Green: ${reactive.buddhabrot.maxIterations2}`}
 			/>
 
 			<NumberField 
-				label="Blue ~"
-				bind:value={relativeIterations.blue}
-				hint={`${reactive.buddhabrot.maxIterations3}`}
+				label="Blue"
+				hideLabel={true}
+				bind:value={iterationSettings.blue}
+				hint={`Blue: ${reactive.buddhabrot.maxIterations3}`}
 			/>
 		</div>
 
@@ -578,6 +590,7 @@
 				label="Samples Per Frame"
 				value={buddhabrot.samples}
 				onInput={e => buddhabrot.samples = e.value}
+				hint={`Total: ${new Intl.NumberFormat().format(reactive.renderer?.totalSamples || 0)}`}
 			/>
 
 			<NumberField 
@@ -610,7 +623,7 @@
 				value={buddhabrot.normalizationFloor}
 				onInput={e => buddhabrot.normalizationFloor = e.value}
 				hint={
-					`Darkens images when sample counts are low. Prevents bright flashes when a new histogram is created.`
+					`Darkens images with low sample counts. Increase to prevent bright static when a new histogram is created.`
 				}
 			/>
 			<NumberField 

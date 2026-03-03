@@ -56,6 +56,8 @@ export class Renderer {
 	autoClearHistogram = true;
 	alwaysClearHistogram = false;
 
+	totalSamples = 0;
+
 	/**
 	 * Re-created on resolution change.
 	 */
@@ -170,6 +172,8 @@ export class Renderer {
 
 		// submit
 		this.device.queue.submit([encoder.finish()]);
+
+		this.totalSamples += buddhabrot.samples;
 	}
 
 	setResolution({ width, height }: { width: number, height: number }) {
@@ -195,6 +199,8 @@ export class Renderer {
 			0,
 			new Uint32Array(elementCount).fill(0)
 		);
+
+		this.totalSamples = 0;
 	}
 
 	downloadImage(fileName: string) {

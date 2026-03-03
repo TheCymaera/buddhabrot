@@ -74,6 +74,7 @@ buddhabrot.maxIterations1 = 20_000;
 buddhabrot.maxIterations2 = buddhabrot.maxIterations1 / 10;
 buddhabrot.maxIterations3 = buddhabrot.maxIterations1 / 20;
 buddhabrot.seed = Buddhabrot.createSeedGenerator();
+buddhabrot.uniformSampleDistribution = true;
 
 // progressively render in stages to prevent
 // the browser from freezing for too long.
@@ -85,5 +86,5 @@ for (let i = 0; i < stages; i++) {
 	console.log(`Rendered ${i + 1} / ${stages}`);
 }
 
-console.log(`Samples = ${totalSamples} (${stages} stages), Iterations = ${buddhabrot.maxIterations1}`);
+console.log(`Samples = ${totalSamples} (${stages} stages), Iterations = ${buddhabrot.maxIterations1}, Uniform = ${buddhabrot.uniformSampleDistribution}`);
 ```
