@@ -164,7 +164,12 @@
 		pointerInput.onPointerRelease = () => canvas.style.cursor = '';
 
 		pointerInput.onMouseWheelGesture = (event) => {
-			buddhabrot.zoom += event.deltaY * -0.001;
+			const oldMidpoint = screenToWorldPosition(event.position);
+			
+			buddhabrot.zoom += event.delta.y * -0.001;
+
+			const newMidpoint = screenToWorldPosition(event.position);
+			buddhabrot.viewCenter.add(newMidpoint.subtract(oldMidpoint).scale(-1));
 		};
 
 		pointerInput.onDragGesture = (event) => {
@@ -182,7 +187,7 @@
 			const oldMidpoint = screenToWorldPosition(event.previousMidpoint);
 			
 			buddhabrot.zoom += event.zoomDelta;
-			buddhabrot.rotation += event.angleDelta;
+			//buddhabrot.rotation += event.angleDelta;
 			
 			const newMidpoint = screenToWorldPosition(event.currentMidpoint);
 
