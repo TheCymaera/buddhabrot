@@ -1,5 +1,6 @@
-@import 'tailwindcss';
-@config '../tailwind.config.js';
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@import "fontawesome-svgs/default.css";
 
 @theme static {
 	--font-sans: Arial, sans-serif; /* 'Noto Sans TC' */
