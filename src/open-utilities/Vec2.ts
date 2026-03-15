@@ -23,6 +23,22 @@ export class Vec2 {
 
 	constructor(public x: number, public y: number) { }
 
+	copy(other: Vec2) {
+		this.x = other.x;
+		this.y = other.y;
+		return this;
+	}
+
+	angleTo(other: Vec2) {
+		return Math.atan2(other.y - this.y, other.x - this.x);
+	}
+
+	distanceTo(other: Vec2) {
+		const dx = this.x - other.x;
+		const dy = this.y - other.y;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+
 	add(other: Vec2) {
 		this.x += other.x;
 		this.y += other.y;
@@ -73,5 +89,9 @@ export class Vec2 {
 		this.x /= length;
 		this.y /= length;
 		return this;
+	}
+
+	toString() {
+		return `Vec2(${this.x}, ${this.y})`;
 	}
 }

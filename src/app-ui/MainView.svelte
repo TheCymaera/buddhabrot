@@ -20,6 +20,7 @@
 	import { degToRad, radToDeg } from '../open-utilities/numbers.js';
 	import TextField from '../ui-components/TextField.svelte';
 	import ToggleSwitchField from '../ui-components/ToggleSwitchField.svelte';
+	import { PointerInput } from '../buddhabrot/PointerInput.js';
 
 	// svelte-ignore perf_avoid_inline_class
 	const app = new class App {
@@ -133,6 +134,70 @@
 		};
 	};
 
+	function getActiveInputVector() {
+		return ({
+			[InputMode.Mandelbrot]: buddhabrot.viewCenter,
+			[InputMode.Julia]: buddhabrot.initialZ,
+			[InputMode.Exponent]: buddhabrot.exponent,
+		})[buddhabrot.inputMode];
+	}
+
+	tick().then(async () => {
+		function screenPositionToWorldOffset(position: Vec2) {
+			const rect = canvas.getBoundingClientRect();
+
+			// [-1, 1]
+			const x = ((position.x - rect.left) / rect.width) * 2 - 1;
+			const y = 1 - ((position.y - rect.top) / rect.height) * 2;
+			
+			const viewYSpan = buddhabrot.viewYSpan;
+			const halfHeight = viewYSpan * 0.5;
+			const halfWidth = halfHeight * (rect.width / rect.height);
+
+			return Vec2.new(x * halfWidth, y * halfHeight);
+		}
+
+		function screenPositionToWorldPosition(position: Vec2) {
+			return screenPositionToWorldOffset(position)
+				.rotate(buddhabrot.rotation)
+				.add(buddhabrot.viewCenter);
+		}
+
+		function screenDeltaToWorldDelta(delta: Vec2) {
+			const rect = canvas.getBoundingClientRect();
+			const viewYSpan = buddhabrot.viewYSpan;
+			const worldDelta = Vec2.new(
+				delta.x / rect.width * viewYSpan * (rect.width / rect.height),
+				-delta.y / rect.height * viewYSpan,
+			);
+
+			worldDelta.rotate(buddhabrot.rotation);
+			return worldDelta;
+		}
+		
+		const pointerInput = new PointerInput(canvas);
+
+		pointerInput.onDragGesture = (event) => {
+			const delta = screenDeltaToWorldDelta(event.delta);
+
+			if (buddhabrot.inputMode === InputMode.Mandelbrot) {
+				delta.scale(-1);
+			}
+
+			getActiveInputVector().add(delta);
+		}
+
+		pointerInput.onPinchGesture = (event) => {
+			const anchor = screenPositionToWorldPosition(event.previousMidpoint);
+			
+			buddhabrot.zoom += event.zoomDelta;
+			buddhabrot.rotation += event.angleDelta;
+			
+			const newOffset = screenPositionToWorldOffset(event.currentMidpoint).rotate(buddhabrot.rotation);
+			buddhabrot.viewCenter.copy(anchor.subtract(newOffset));
+		}
+	});
+
 	$effect(()=>{
 		const { width, height, useContainFit } = calculateResolution();
 		
@@ -211,13 +276,7 @@
 		velocity = snapToCardinalDirection(velocity);
 		velocity.scale(panAmount);
 
-		const targetVector = ({
-			[InputMode.Mandelbrot]: buddhabrot.viewCenter,
-			[InputMode.Julia]: buddhabrot.initialZ,
-			[InputMode.Exponent]: buddhabrot.exponent,
-		})[buddhabrot.inputMode];
-
-		targetVector.add(velocity);
+		getActiveInputVector().add(velocity);
 	}
 
 	let sidebarOpen = $state(true);
@@ -249,7 +308,7 @@
 			}}
 		></div>-->
 		<canvas 
-			class="absolute inset-0 w-full h-full bg-black object-fill"
+			class="absolute inset-0 w-full h-full bg-black object-fill touch-none"
 			bind:this={canvas}
 			bind:clientWidth={clientDimensions.width}
 			bind:clientHeight={clientDimensions.height}
