@@ -27,6 +27,9 @@ export class PointerInput {
 
 	onDragGesture: (event: DragGestureEvent) => void = () => { };
 
+	onPointerCapture: (pointerId: number) => void = ()=>{};
+	onPointerRelease: (pointerId: number) => void = ()=>{};
+
 	constructor(canvas: HTMLCanvasElement) {
 		canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event));
 		canvas.addEventListener('pointerup', (event) => this.onPointerEnd(event));
@@ -41,6 +44,7 @@ export class PointerInput {
 
 		event.preventDefault();
 		element.setPointerCapture(event.pointerId);
+		this.onPointerCapture(event.pointerId);
 		this.activePointers.set(event.pointerId, Vec2.new(event.clientX, event.clientY));
 	}
 
@@ -50,6 +54,7 @@ export class PointerInput {
 		this.activePointers.delete(event.pointerId);
 
 		if (element.hasPointerCapture(event.pointerId)) {
+			this.onPointerRelease(event.pointerId);
 			element.releasePointerCapture(event.pointerId);
 		}
 	}

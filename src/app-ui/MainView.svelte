@@ -177,6 +177,9 @@
 		
 		const pointerInput = new PointerInput(canvas);
 
+		pointerInput.onPointerCapture = () => canvas.style.cursor = 'grabbing';
+		pointerInput.onPointerRelease = () => canvas.style.cursor = '';
+
 		pointerInput.onDragGesture = (event) => {
 			const delta = screenDeltaToWorldDelta(event.delta);
 
