@@ -67,7 +67,7 @@
 
 	tick().then(async () => {
 		// create renderer
-		const result = await Renderer.create(canvas).catch(e => e);
+		const result = await Renderer.create(canvas).catch(e => e as Error);
 
 		if (result instanceof Error) {
 			rendererInitError = result;

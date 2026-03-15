@@ -2,9 +2,13 @@ import './main.css';
 
 import MyApp from './app-ui/MyApp.svelte';
 import { mount } from 'svelte';
-mount(MyApp, {
-	target: document.querySelector('.SvelteOutlet')!,
-});
+
+// Fix iOS Safari :active styles.
+document.documentElement.addEventListener("touchstart",()=>undefined);
+
+// mount app
+const element = document.querySelector(".SvelteOutlet")!;
+mount(MyApp, { target: element });
 
 if (import.meta.hot) {
 	import.meta.hot.accept(() => {
