@@ -79,8 +79,9 @@ export class PointerInput {
 
 		if (element.hasPointerCapture(event.pointerId)) {
 			element.releasePointerCapture(event.pointerId);
-			this.onPointerRelease(event.pointerId);
 		}
+		
+		this.onPointerRelease(event.pointerId);
 	}
 
 	#onPointerMove(event: PointerEvent) {
