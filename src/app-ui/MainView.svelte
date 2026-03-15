@@ -143,7 +143,7 @@
 	}
 
 	tick().then(async () => {
-		function screenPositionToWorldOffset(position: Vec2) {
+		function screenToWorldPosition(position: Vec2) {
 			const rect = canvas.getBoundingClientRect();
 
 			// [-1, 1]
@@ -151,28 +151,11 @@
 			const y = 1 - ((position.y - rect.top) / rect.height) * 2;
 			
 			const viewYSpan = buddhabrot.viewYSpan;
-			const halfHeight = viewYSpan * 0.5;
-			const halfWidth = halfHeight * (rect.width / rect.height);
+			const viewXSpan = viewYSpan * (rect.width / rect.height);
 
-			return Vec2.new(x * halfWidth, y * halfHeight);
-		}
-
-		function screenPositionToWorldPosition(position: Vec2) {
-			return screenPositionToWorldOffset(position)
+			return Vec2.new(x * viewXSpan / 2, y * viewYSpan / 2)
 				.rotate(buddhabrot.rotation)
-				.add(buddhabrot.viewCenter);
-		}
-
-		function screenDeltaToWorldDelta(delta: Vec2) {
-			const rect = canvas.getBoundingClientRect();
-			const viewYSpan = buddhabrot.viewYSpan;
-			const worldDelta = Vec2.new(
-				delta.x / rect.width * viewYSpan * (rect.width / rect.height),
-				-delta.y / rect.height * viewYSpan,
-			);
-
-			worldDelta.rotate(buddhabrot.rotation);
-			return worldDelta;
+				.add(buddhabrot.viewCenter)
 		}
 		
 		const pointerInput = new PointerInput(canvas);
@@ -180,8 +163,13 @@
 		pointerInput.onPointerCapture = () => canvas.style.cursor = 'grabbing';
 		pointerInput.onPointerRelease = () => canvas.style.cursor = '';
 
+		pointerInput.onMouseWheelGesture = (event) => {
+			buddhabrot.zoom += event.deltaY * -0.001;
+		};
+
 		pointerInput.onDragGesture = (event) => {
-			const delta = screenDeltaToWorldDelta(event.delta);
+			const delta = screenToWorldPosition(event.current)
+				.subtract(screenToWorldPosition(event.previous));
 
 			if (buddhabrot.inputMode === InputMode.Mandelbrot) {
 				delta.scale(-1);
@@ -191,13 +179,14 @@
 		}
 
 		pointerInput.onPinchGesture = (event) => {
-			const anchor = screenPositionToWorldPosition(event.previousMidpoint);
+			const oldMidpoint = screenToWorldPosition(event.previousMidpoint);
 			
 			buddhabrot.zoom += event.zoomDelta;
 			buddhabrot.rotation += event.angleDelta;
 			
-			const newOffset = screenPositionToWorldOffset(event.currentMidpoint).rotate(buddhabrot.rotation);
-			buddhabrot.viewCenter.copy(anchor.subtract(newOffset));
+			const newMidpoint = screenToWorldPosition(event.currentMidpoint);
+
+			buddhabrot.viewCenter.add(newMidpoint.subtract(oldMidpoint).scale(-1));
 		}
 	});
 
@@ -311,7 +300,7 @@
 			}}
 		></div>-->
 		<canvas 
-			class="absolute inset-0 w-full h-full bg-black object-fill touch-none"
+			class="absolute inset-0 w-full h-full bg-black object-fill"
 			bind:this={canvas}
 			bind:clientWidth={clientDimensions.width}
 			bind:clientHeight={clientDimensions.height}

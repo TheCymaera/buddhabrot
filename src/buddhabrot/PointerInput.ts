@@ -12,7 +12,6 @@ export interface PinchGestureEvent {
 export interface DragGestureEvent {
 	current: Vec2,
 	previous: Vec2,
-	delta: Vec2
 }
 
 export class PointerInput {
@@ -29,12 +28,16 @@ export class PointerInput {
 
 	onPointerCapture: (pointerId: number) => void = ()=>{};
 	onPointerRelease: (pointerId: number) => void = ()=>{};
+	onMouseWheelGesture: (event: WheelEvent) => void = () => {};
 
 	constructor(canvas: HTMLCanvasElement) {
+		canvas.style.touchAction = 'none';
+		
 		canvas.addEventListener('pointerdown', (event) => this.onPointerDown(event));
 		canvas.addEventListener('pointerup', (event) => this.onPointerEnd(event));
 		canvas.addEventListener('pointercancel', (event) => this.onPointerEnd(event));
 		canvas.addEventListener('pointermove', (event) => this.onPointerMove(event));
+		canvas.addEventListener('wheel', (event) => this.onMouseWheelGesture(event), { passive: false });
 	}
 
 	private onPointerDown(event: PointerEvent) {
@@ -91,8 +94,7 @@ export class PointerInput {
 			this.onPinchGesture({ previous: previousPinch, current: currentPinch, zoomDelta, angleDelta, previousMidpoint, currentMidpoint });
 		} else {
 			// drag gesture
-			const delta = current.clone().subtract(previous);
-			this.onDragGesture({ current, previous, delta });
+			this.onDragGesture({ current, previous });
 		}
 	}
 }
