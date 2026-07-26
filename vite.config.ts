@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default vite.defineConfig({
 	base: "./",
+
 	plugins: [
 		tailwindcss(),
 		svelte(),

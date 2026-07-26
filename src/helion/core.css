@@ -1,0 +1,275 @@
+@keyframes loadingBar {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+@utility helion-stack {
+	@layer base {
+		position: relative;
+
+		> * {
+			position: absolute;
+			inset: 0 !important;
+			width: 100% !important;
+			height: 100% !important;
+		}
+	}
+}
+
+@utility helion-wrapping-grid {
+	@layer base {
+		--min-column-width: 100px;
+		
+		--_repeat-mode: auto-fill;
+
+		--_grid-template: repeat(var(--_repeat-mode), minmax(min(100%, var(--min-column-width)), 1fr));
+
+		display: grid;
+		grid-template-columns: var(--_grid-template);
+		grid-template-rows: unset;
+		/*&[axis=vertical] {
+			grid-template-columns: unset;
+			grid-template-rows: var(--_grid-template);
+		}*/
+
+		&[data-expand] {
+			--_repeat-mode: auto-fit;
+		}
+	}
+}
+
+@utility animate-loadingBar {
+	animation: loadingBar 1s infinite;
+}
+
+
+@utility inset-outline {
+	outline-offset: calc(var(--outline-width) * -1);
+}
+
+@utility helion-box-field {
+	@layer base {
+		@apply
+			w-full p-3 border border-containerBorder rounded-md bg-transparent
+			disabled:opacity-50
+	}
+}
+
+@utility helion-text-field-box {
+	@layer components {
+		@apply
+			rounded-md
+			border
+			border-containerBorder
+			px-3
+			py-2
+			read-only:opacity-70
+			read-only:bg-current/5;
+	}
+}
+
+@utility helion-select-field-box {
+	@layer components {
+		@apply
+			rounded-md
+			border
+			border-containerBorder
+			px-3
+			py-2
+			disabled:opacity-70
+			disabled:bg-current/5;
+	}
+}
+
+@utility helion-box-field-label {
+	@layer components {
+		@apply pl-1 mb-1 font-medium;
+	}
+}
+
+@utility helion-filled-button {
+	@layer components {
+		@apply
+			bg-primary-600
+			text-onPrimary
+			border border-transparent
+			px-6 py-2
+			rounded-full
+			not-disabled:hover:bg-primary-700
+			not-disabled:active:bg-primary-800
+			transition-[background-color,box-shadow]
+			aria-current-or-selected:bg-green-600
+			shadow-primary-500/30
+			not-disabled:cursor-pointer
+			disabled:bg-gray-600
+			disabled:opacity-50
+			;
+	}
+}
+
+@utility helion-outlined-button {
+	@layer components {
+		@apply
+			px-6 py-2
+			rounded-full
+			border border-containerBorder
+			not-disabled:hover:bg-outlinedButtonHover
+			not-disabled:active:bg-outlinedButtonActive
+			aria-current-or-selected:bg-primary-500/30!
+			aria-current-or-selected:border-transparent
+			not-disabled:cursor-pointer
+			transition-colors
+			inset-outline;
+	}
+}
+
+@utility helion-paper {
+	@layer components {
+		@apply block bg-paper text-onPaper;
+
+		&:is(a[href], button, [role="button"]) {
+			text-align: inherit;
+			@apply 
+				not-disabled:hover:bg-paperHover
+				not-disabled:active:bg-paperActive
+				not-disabled:aria-current-or-selected:bg-[color-mix(in_srgb,var(--color-paper),var(--color-primary-500)_30%)] 
+				not-disabled:cursor-pointer
+				transition-colors
+				inset-outline
+		}
+	}
+}
+
+@utility helion-icon-button {
+	@layer components {
+		@apply relative flex flex-col justify-center items-center;
+
+		@apply
+			w-[1em] h-[1em] rounded-full
+			bg-transparent
+			transition-colors
+
+			not-disabled:hover:before:bg-iconButtonHover
+			not-disabled:active:before:bg-iconButtonActive
+			disabled:opacity-30
+
+			cursor-pointer
+			inset-outline
+			;
+
+		&::before {
+			content: "";
+
+			@apply absolute
+				top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+				w-(--helion-IconButton-splashSize)
+				h-(--helion-IconButton-splashSize)
+				rounded-full
+				transition-colors;
+		}
+	}
+}
+
+@utility helion-app-bar-button {
+	@layer components {
+		--helion-IconButton-splashSize: var(--helion-AppBar-splashSize);
+		width: var(--helion-AppBar-width) !important;
+		height: var(--helion-AppBar-width) !important;
+		@apply helion-icon-button;
+	}
+}
+
+@utility helion-nav-rail-button {
+	@layer components {
+		@apply relative
+			flex flex-col items-center justify-center gap-0.5
+			
+			w-(--helion-NavRail-width)
+			h-(--helion-NavRail-width)
+
+			text-base/none
+			text-onNavRail
+			aria-current-or-selected:text-primary-500
+			transition-[color,background-color,opacity]
+
+			outline-none
+			
+			rounded-full 
+			
+			not-disabled:hover:bg-navRailHover
+			not-disabled:focus-visible:bg-navRailHover
+			not-disabled:active:bg-navRailActive
+			disabled:opacity-30
+
+			text-center
+
+			not-disabled:cursor-pointer
+	}
+}
+
+@utility helion-floating-action-button {
+	@layer components {
+		transition: background-color 200ms;
+		
+		@apply relative flex flex-col justify-center items-center;
+
+		@apply
+			rounded-full
+			shadow-md
+			bg-primary-500
+			text-onPrimary
+			hover:bg-primary-600
+			active:bg-primary-700
+			disabled:opacity-30
+			min-w-14 max-w-14 min-h-14 max-h-14
+			cursor-pointer;
+	}
+}
+
+@custom-variant prolonged-active (&:is(:active, [data-prolonged-active]));
+@custom-variant aria-current-or-selected (&[aria-current]:not([aria-current="false"]), &[aria-selected]:not([aria-selected="false"]));
+
+@layer base {
+	:root {
+		font-family: var(--font-main);
+		accent-color: var(--color-primary-500);
+
+		background: var(--color-surface);
+		color: var(--color-onSurface);
+
+		tab-size: 4;
+	}
+
+	* {
+		min-height: 0;
+		min-width: 0;
+
+		outline: var(--outline-width) solid transparent;
+		outline-offset: var(--outline-width);
+	}
+
+	:where(:focus-visible) {
+		outline-color: var(--color-primary-500);
+	}
+
+	small {
+		color: var(--color-smallText);
+	}
+
+	hr {
+		border: none;
+		border-top: .08rem solid var(--color-divider);
+	}
+
+	code {
+		font-family: var(--font-mono);
+	}
+
+	input, textarea, select {
+		@apply inset-outline;
+	}
+}

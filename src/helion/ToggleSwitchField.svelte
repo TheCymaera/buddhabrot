@@ -1,47 +1,39 @@
 <script lang="ts">
+    import { prolongActive } from "./prolongedActive.js";
+
 	interface Props {
 		checked: boolean
-		onChange: (event: { checked: boolean }) => void
 		label: string
 		readonly?: boolean
 		className?: string
+		onChange?: (event: { checked: boolean }) => void
 	}
 
-	let { checked = $bindable(), onChange, label, readonly = false, className }: Props = $props();
+	let { checked = $bindable(), label, readonly = false, className, onChange }: Props = $props();
 
-	let pressed = $state(false);
-	let pressTime = 0;
-	const minPressTime = 200;
-	function press() {
-		pressed = true;
-		pressTime = performance.now();
-	}
-
-	function unPress() {
-		const elapsed = performance.now() - pressTime;
-		if (elapsed > minPressTime) return void (pressed = false);
-		setTimeout(() => pressed = false, minPressTime - elapsed);
-	}
+	let showSplash = $state(false);
 </script>
-
-<svelte:window onpointerup={unPress} />
-
 <helion-toggle-switch-field class={className}>
 	<label 
 		class="flex items-center gap-2 cursor-pointer mx-2 {readonly ? "pointer-events-none" : ""}"
-		onpointerdown={press}
+		{@attach prolongActive({
+			callback: (value) => showSplash = value,
+		})}
 	>
 		<input
 			type="checkbox"
 			class="absolute opacity-0"
 			bind:checked={checked}
-			onchange={() => onChange({ checked })}
 			disabled={readonly}
+			oninput={(event) => onChange?.({ checked: event.currentTarget.checked })}
+			{@attach prolongActive({
+				callback: (value) => showSplash = value,
+			})}
 		/>
 
 		<helion-toggle-switch-track
 			class:Checked={checked}
-			class:Pressed={pressed}
+			class:Pressed={showSplash}
 			class:Disabled={readonly}
 		>
 			<helion-toggle-switch-splash></helion-toggle-switch-splash>

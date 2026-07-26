@@ -1,15 +1,12 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { Renderer } from '../buddhabrot/Renderer.js';
-	import NumberField from '../ui-components/NumberField.svelte';
-	import Button from '../ui-components/Button.svelte';
-	import CircleButton from '../ui-components/CircleButton.svelte';
+	import NumberField from '../helion/NumberField.svelte';
 	import { fa5_brands_github, fa5_solid_bars, fa5_solid_book, fa5_solid_code, fa5_solid_info, fa5_solid_paintBrush, fa5_solid_play, fa5_solid_times, fa6_solid_upDownLeftRight } from 'fontawesome-svgs';
-	import SelectField from '../ui-components/SelectField.svelte';
+	import SelectField from '../helion/SelectField.svelte';
 	import { githubRepositoryLink } from './links.js';
-	import NavRailButton from '../ui-components/NavRailButton.svelte';
-	import NavRail from '../ui-components/NavRail.svelte';
-	import NavRailSpacer from '../ui-components/NavRailSpacer.svelte';
+	import NavRail from '../helion/NavRail.svelte';
+	import NavRailSpacer from '../helion/NavRailSpacer.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { Buddhabrot, IndicatorSetting, InputMode } from '../buddhabrot/Buddhabrot.js';
 	import { Vec2 } from '../open-utilities/Vec2.js';
@@ -18,8 +15,8 @@
 	import { Duration } from '../open-utilities/Duration.js';
 	import { inputMap } from '../buddhabrot/InputMap.js';
 	import { degToRad, radToDeg } from '../open-utilities/numbers.js';
-	import TextField from '../ui-components/TextField.svelte';
-	import ToggleSwitchField from '../ui-components/ToggleSwitchField.svelte';
+	import TextField from '../helion/TextField.svelte';
+	import ToggleSwitchField from '../helion/ToggleSwitchField.svelte';
 	import { PointerInput } from '../buddhabrot/PointerInput.js';
 
 	// svelte-ignore perf_avoid_inline_class
@@ -352,12 +349,13 @@
 			hover:opacity-100 transition-opacity delay-50 duration-500
 			{deviceSupportsHover.current ? "opacity-0" : ""}
 		">
-			<CircleButton 
-				onPress={()=>(sidebarOpen = !sidebarOpen)}
-				label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+			<button 
+				onclick={()=>(sidebarOpen = !sidebarOpen)}
+				class="helion-floating-action-button"
+				title={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
 			>
 				{@html sidebarOpen ? fa5_solid_times : fa5_solid_bars}
-			</CircleButton>
+			</button>
 		</div>
 	</div>
 	
@@ -381,36 +379,41 @@
 		}}
 	>
 		<NavRail placement="left">
-			<NavRailButton
-				selected={sidebarSection === "controls"}
-				onPress={() => sidebarSection = "controls"}
-				label="Position"
-				displayLabel={true}
+			<button
+				class="helion-nav-rail-button"
+				aria-current={sidebarSection === 'controls'}
+				onclick={() => (sidebarSection = 'controls')}
 			>
 				{@html fa6_solid_upDownLeftRight}
-			</NavRailButton>
+				<span class="text-xs">Position</span>
+			</button>
 
-			<NavRailButton
-				selected={sidebarSection === "rendering"}
-				onPress={() => sidebarSection = "rendering"}
-				label="Display"
-				displayLabel={true}
+			<button
+				class="helion-nav-rail-button"
+				aria-current={sidebarSection === 'rendering'}
+				onclick={() => (sidebarSection = 'rendering')}
 			>
 				{@html fa5_solid_paintBrush}
-			</NavRailButton>
+				<span class="text-xs">Display</span>
+			</button>
 
 			<NavRailSpacer />
 
-			<NavRailButton
-				label="Info"
-				onPress={()=>location.hash = "#info"}
+			<a
+				class="helion-nav-rail-button"
+				href="#info"
 			>
 				{@html fa5_solid_info}
-			</NavRailButton>
-			<a tabindex="-1" href="{githubRepositoryLink}" target="_blank">
-				<NavRailButton label="GitHub" onPress={()=>{}}>
-					{@html fa5_brands_github}
-				</NavRailButton>
+				<span class="text-xs">Info</span>
+			</a>
+
+			<a
+				class="helion-nav-rail-button"
+				href={githubRepositoryLink}
+				target="_blank"
+			>
+				{@html fa5_brands_github}
+				<span class="text-xs">GitHub</span>
 			</a>
 		</NavRail>
 		<div class="p-4 overflow-y-auto">
@@ -434,19 +437,21 @@
 				{ name: 'Julia', mode: InputMode.Julia },
 				{ name: 'X', mode: InputMode.Exponent },
 			] as const as { name, mode } }
-				<Button 
-					onPress={() => reactive.buddhabrot.inputMode = mode}
-					className="w-full p-2! rounded! transition-[background-color,color,outline-offset]!"
-					variant={reactive.buddhabrot.inputMode === mode ? 'filled' : 'outlined'}
+				<button 
+					onclick={() => reactive.buddhabrot.inputMode = mode}
+					class="
+						w-full p-2! rounded!
+						{reactive.buddhabrot.inputMode === mode ? 'helion-filled-button' : 'helion-outlined-button'}
+					"
 				>
 					{name}
-				</Button>
+				</button>
 			{/each}
 		</div>
 
 		{#snippet kbd(text: string)}
 			<kbd class="
-				bg-surfaceContainer text-onSurfaceContainer rounded px-3 ml-1 font-mono
+				bg-codeContainer rounded px-3 ml-1 font-mono
 			">{text}</kbd>
 		{/snippet}
 
@@ -486,13 +491,13 @@
 			</div>
 		</div>
 
-		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+		<div class="text-sm mb-3 font-mono bg-codeContainer p-2 rounded">
 			z <span class="opacity-30">// Julia</span><br>
 			c <span class="opacity-30">// Mandelbrot</span><br>
 			e <span class="opacity-30">// X</span>
 		</div>
 
-		<div class="text-sm mb-3 font-mono bg-surfaceContainer p-2 rounded">
+		<div class="text-sm mb-3 font-mono bg-codeContainer p-2 rounded">
 			z = z ^ e + c
 		</div>
 

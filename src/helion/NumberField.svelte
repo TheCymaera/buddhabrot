@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { generateElementId } from './ui-component-utilities.js';
+  import { generateId } from "./generateId.js";
 
 	interface Props {
 		type?: string,
@@ -39,7 +39,6 @@
 
 	let input: HTMLInputElement;
 	$effect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		emptyIfNull; nullValue; value;
 		
 		if (!input) return
@@ -48,27 +47,24 @@
 		input.value = (emptyIfNull && value === nullValue) ? "" : `${value}`
 	});
 
-	const id = generateElementId("number-field");
-
+	const id = generateId();
 </script>
 
-<div class="block {className}">
-	<label class="pl-(--radius-md)" style:display={hideLabel ? "none" : ""} for={id}>
+<helion-number-field class={className}>
+	<label for={id} class="block {hideLabel ? "hidden" : ""}">
 		{label}
 	</label>
-	<div class="inputContainer">
-		<input 
+	<div class="grid *:[grid-area:1/1]">
+		<input
 			id={id}
 			type={type}
 			inputmode="decimal"
 			class="
-				w-full px-3 py-2 border-[.08rem] border-containerBorder rounded-md bg-transparent
-				outline-offset-[calc(var(--outline-width)*-1)]
-				disabled:opacity-50 transition-colors
+				helion-box-field
 				{boxClassName}
 				{className.includes("absolute") ? "absolute inset-0" : ""}
 			"
-			readonly={readonly} 
+			disabled={readonly} 
 			placeholder="{placeholder || nullValue.toString()}"
 			bind:this={input} 
 			oninput={()=>{
@@ -87,13 +83,11 @@
 	<output class="block mt-0.5 pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
 		<small class="block whitespace-pre-wrap {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
 	</output>
-</div>
+</helion-number-field>
 <style>
-.inputContainer {
-	display: grid;
-}
-
-.inputContainer > * {
-	grid-area: 1 / 1;
-}
+	@layer base {
+		helion-number-field {
+			display: block;
+		}
+	}
 </style>

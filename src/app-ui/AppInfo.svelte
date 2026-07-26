@@ -1,8 +1,6 @@
 <script lang="ts" module>
 	import { fa5_solid_times } from 'fontawesome-svgs';
-	import Button from '../ui-components/Button.svelte';
 	import { githubRepositoryLink, homeLink, minecraftYouTubeCode } from './links.js';
-	import IconButton from '../ui-components/IconButton.svelte';
 
 	export function infoWindowOpened() {
 		return window.location.hash === "#info";
@@ -13,13 +11,13 @@
 	<h1 class="text-2xl text-onSurface font-bold mb-4 pr-7">Buddhabrot Explorer</h1>
 
 
-	<IconButton 
-		className="absolute! top-6 right-6 text-xl"
-		label="Close"
-		onPress={() => window.location.hash = ""}
+	<a 
+		class="helion-icon-button absolute! top-6 right-6 text-xl"
+		title="Close"
+		href="#/"
 	>
 		{@html fa5_solid_times}
-	</IconButton>
+	</a>
 
 
 	<div class="mb-4">
@@ -110,19 +108,19 @@
 	</div>
 	
 	<div class="mt-6 text-right">
-		<Button 
-			variant="filled" 
-			onPress={() => window.location.hash = ""}
+		<a 
+			class="helion-filled-button" 
+			href="#/"
 		>
 			Close
-		</Button>
+		</a>
 	</div>
 </div>
 
 <style>
 @layer base {
 	code {
-		background-color: var(--color-surfaceContainer);
+		background-color: var(--color-codeContainer);
 		padding: 0em .25em;
 	}
 }

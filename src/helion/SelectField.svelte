@@ -1,5 +1,6 @@
 <script lang="ts" generics="T">
 	import { fa5_solid_angleDown } from "fontawesome-svgs";
+	import { generateId } from "./generateId.js";
 
 	let {
 		value = $bindable(),
@@ -15,32 +16,29 @@
 		value: T,
 		label?: string,
 		readonly?: boolean,
-		options?: readonly { value: T, label: string }[],
+		options?: readonly { value: T, label: string, disabled?: boolean }[],
 		hint?: string,
 		error?: string,
 		boxClassName?: string,
 		onChange?: (event: { value: T })=>void,
 		className?: string
 	} = $props();
+
+	const id = generateId();
 </script>
 
-<label class="flex flex-col {className}">
-	<div class="pl-1">{label}</div>
+<helion-select-field class={className}>
+	<label for={id} class="block pl-1">{label}</label>
 	<div class="relative">
 		<select 
-			class="
-				flex-1 w-full px-3 p-2 pr-6! border-[.08rem] border-containerBorder rounded-md bg-transparent
-				outline-offset-[calc(var(--outline-width)*-1)]
-				disabled:opacity-50
-				appearance-none
-				{boxClassName}
-			" 
+			id={id}
+			class="helion-box-field pr-7 appearance-none {boxClassName}"
 			bind:value={value}
 			disabled={readonly}
 			onchange={() => onChange({ value })}
 		>
-			{#each options as {value, label: text}}
-				<option value={value} class="bg-surfaceContainer text-onSurfaceContainer">
+			{#each options as {value, label: text, disabled}}
+				<option value={value} class="bg-paper text-onPaper" disabled={disabled}>
 					{text}
 				</option>
 			{/each}
@@ -53,4 +51,12 @@
 	<output class="pl-1" style:display={(error || hint) ? "" : "none"}>
 		<small class="whitespace-pre {error ? "text-red-500" : ""}">{error || hint}</small>
 	</output>
-</label>
+</helion-select-field>
+
+<style lang="postcss">
+	@layer base {
+		helion-select-field {
+			display: block;
+		}
+	}
+</style>

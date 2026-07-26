@@ -1,6 +1,6 @@
 
 <script lang="ts">
-	import { generateElementId } from "./ui-component-utilities.js";
+	import { generateId } from "./generateId.js";
 
 	let {
 		value = $bindable(),
@@ -26,7 +26,7 @@
 		className?: string
 	} = $props();
 
-	const id = generateElementId('range-slider');
+	const id = generateId();
 </script>
 
 <div class={className}>
@@ -77,21 +77,21 @@ input {
 		width: 100%;
 		height: 7px;
 		border-radius: 7px;
-		background: var(--color-surfaceContainer);
+		background: var(--color-paper);
 		border: none;
 	}
 	&::-moz-range-track {
 		width: 100%;
 		height: 7px;
 		border-radius: 7px;
-		background: var(--color-surfaceContainer);
+		background: var(--color-paper);
 		border: none;
 	}
 	&:hover::-moz-range-track {
-		background: var(--color-surfaceContainer);
+		background: var(--color-paper);
 	}
 	&:hover::-webkit-slider-runnable-track {
-		background: var(--color-surfaceContainer);
+		background: var(--color-paper);
 	}
 	&::-webkit-slider-thumb {
 		margin-top: -7.5px;

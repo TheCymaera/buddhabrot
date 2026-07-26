@@ -1,68 +1,14 @@
 @import "tailwindcss";
+@import "./helion/theme.css";
+@import "./helion/core.css";
 @import "fontawesome-svgs/default.css";
 
-@theme static {
-	--font-sans: Arial, sans-serif; /* 'Noto Sans TC' */
-	--font-mono: 'Courier New', Courier, monospace;
-	--font-main: var(--font-sans);
-
-	--color-primary-50: var(--color-teal-50);
-	--color-primary-100: var(--color-teal-100);
-	--color-primary-200: var(--color-teal-200);
-	--color-primary-300: var(--color-teal-300);
-	--color-primary-400: var(--color-teal-400);
-	--color-primary-500: var(--color-teal-500);
-	--color-primary-600: var(--color-teal-600);
-	--color-primary-700: var(--color-teal-700);
-	--color-primary-800: var(--color-teal-800);
-	--color-primary-900: var(--color-teal-900);
-	--color-primary-950: var(--color-teal-950);
-
-	--color-surface: #252525;
-	--color-onSurface: #eee;
-	
-	--color-surfaceContainer: #111;
-	--color-onSurfaceContainer: #eee;
-
-	--color-navRail: #333;
-	--color-onNavRail: #eee;
-
-	--color-inkWell: #FFFFFF88;
-	--color-containerBorder: #FFFFFF22;
-	--color-divider: #FFFFFF22;
-
-	--color-toggleSwitchTrackColor: #000;
-	--color-toggleSwitchThumbColor: #fff;
-
-	--outline-width: 3px;
-}
-
-.SvelteOutlet {
-	position: fixed;
-
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-}
-
-.SvelteOutlet > * {
-	position: absolute !important;
-	inset: 0 !important;
-}
-
-
-@layer base {
-	html, body {
+@layer utilities {
+	html.main-app, html.main-app body {
 		position: relative;
 		width: 100%;
 		height: 100%;
 		margin: 0px;
-
-		font-family: var(--font-main);
-		background-color: var(--color-surface);
-		color: var(--color-onSurface);
-		accent-color: var(--color-primary-500);
 
 		overflow: hidden;
 		overscroll-behavior: none;
@@ -70,22 +16,22 @@
 		-webkit-tap-highlight-color: transparent;
 	}
 
-	* {
-		min-height: 0;
-		min-width: 0;
-		outline-color: transparent;
-	}
+	.svelte-outlet {
+		position: fixed;
 
-	:where(:focus-visible) {
-		outline: transparent solid var(--outline-width);
-		outline-offset: var(--outline-width);
-		outline-color: var(--color-primary-500);
-	}
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
 
-	hr {
-		border-top: 1px solid var(--color-divider);
+		 > * {
+			position: absolute !important;
+			inset: 0 !important;
+		}
 	}
+}
 
+@layer base {
 	::-webkit-scrollbar {
 		width: .7rem;
 		height: .7rem;
@@ -96,11 +42,11 @@
 	}
 
 	::-webkit-scrollbar-thumb {
-		background: color-mix(in srgb, transparent, var(--color-onSurfaceContainer) 10%);
+		background: color-mix(in srgb, transparent, var(--color-onSurface) 10%);
 		border-radius: 9999px;
 	}
 
 	::-webkit-scrollbar-thumb:hover {
-		background: color-mix(in srgb, transparent, var(--color-onSurfaceContainer) 20%);
+		background: color-mix(in srgb, transparent, var(--color-onSurface) 20%);
 	}
 }

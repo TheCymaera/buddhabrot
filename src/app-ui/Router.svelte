@@ -34,7 +34,7 @@ let hash = $state(window.location.hash);
 			overflow-auto
 		">
 			<div class="
-				bg-surfaceContainer text-onSurfaceContainer 
+				bg-paper text-onPaper 
 				p-4 rounded-md shadow-md
 				w-full max-w-min m-auto
 				overflow-auto

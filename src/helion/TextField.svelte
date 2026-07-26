@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { generateElementId } from './ui-component-utilities.js';
+    import type { FullAutoFill } from "svelte/elements";
+	import { generateId } from "./generateId.js";
 
 	interface Props {
 		value: string,
@@ -10,7 +11,9 @@
 		hint?: string,
 		error?: string,
 		className?: string,
+		boxClassName?: string,
 		trailingIcon?: import('svelte').Snippet,
+		autocomplete?: FullAutoFill,
 		onInput?: (value: string) => void
 	}
 
@@ -23,11 +26,13 @@
 		hint = "",
 		error = "",
 		className,
+		boxClassName = "",
 		trailingIcon,
+		autocomplete,
 		onInput = () => {}
 	}: Props = $props();
 
-	const id = generateElementId("text-field");
+	const id = generateId();
 </script>
 
 <helion-text-field class={className}>
@@ -39,20 +44,16 @@
 			value={value} 
 			placeholder={placeholder} 
 			disabled={readonly} 
-			class="
-				w-full p-3 border-[.08rem] border-containerBorder rounded-md bg-transparent
-				inset-outline
-				outline-offset-[calc(var(--outline-width)*-1)]
-				disabled:opacity-50
-			"
+			class="helion-box-field {boxClassName}"
 			oninput={function () { value = this.value; onInput(value) }}
+			autocomplete={autocomplete}
 		/>
 		<div class="absolute right-0 top-0 h-full grid">
 			{@render trailingIcon?.()}
 		</div>
 	</div>
-	<output class="block mt-0.5 pl-(--radius-md)" style:display={(error || hint) ? "" : "none"}>
-		<small class="block whitespace-pre-wrap {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
+	<output class="pl-1" style:display={(error || hint) ? "" : "none"}>
+		<small class="whitespace-pre {error ? "text-red-500" : ""}">{error || hint}</small>
 	</output>
 </helion-text-field>
 

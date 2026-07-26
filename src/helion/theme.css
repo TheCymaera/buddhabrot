@@ -1,0 +1,61 @@
+@theme {
+	--font-sans: Arial, sans-serif;
+	--font-mono: 'Courier New', Courier, monospace;
+	--font-main: var(--font-sans);
+
+	--color-primary-50: var(--color-teal-50);
+	--color-primary-100: var(--color-teal-100);
+	--color-primary-200: var(--color-teal-200);
+	--color-primary-300: var(--color-teal-300);
+	--color-primary-400: var(--color-teal-400);
+	--color-primary-500: var(--color-teal-500);
+	--color-primary-600: var(--color-teal-600);
+	--color-primary-700: var(--color-teal-700);
+	--color-primary-800: var(--color-teal-800);
+	--color-primary-900: var(--color-teal-900);
+	--color-primary-950: var(--color-teal-950);
+
+	--color-onPrimary: #ffffff;
+
+	--color-inkWell: var(--color-onSurface);
+
+	--color-surface: #252525;
+	--color-onSurface: #eee;
+
+	--color-paper: #333;
+	--color-onPaper: var(--color-onSurface);
+	--color-paperHover: color-mix(in srgb, var(--color-paper), var(--color-inkWell) 15%);
+	--color-paperActive: color-mix(in srgb, var(--color-paper), var(--color-inkWell) 25%);
+
+	--color-divider: color-mix(in srgb, transparent, var(--color-onSurface) 20%);
+	
+	--color-containerBorder: color-mix(in srgb, transparent, var(--color-onSurface) 15%);
+
+	--color-outlinedButtonHover: color-mix(in srgb, transparent, var(--color-inkWell) 10%);
+	--color-outlinedButtonActive: color-mix(in srgb, transparent, var(--color-inkWell) 20%);
+
+	--color-smallText: color-mix(in srgb, transparent, var(--color-onSurface) 80%);
+	--color-codeContainer: #111;
+	--color-listMarker: color-mix(in srgb, transparent, var(--color-onSurface) 30%);
+
+	--color-toggleSwitchTrack: var(--color-onPaper);
+	--color-toggleSwitchThumb: var(--color-paper);
+
+	--outline-width: 3px;
+
+	--color-iconButtonHover: color-mix(in srgb, transparent, var(--color-inkWell) 10%);
+	--color-iconButtonActive: color-mix(in srgb, transparent, var(--color-inkWell) 20%);
+
+	--color-navRail: var(--color-paper);
+	--color-onNavRail: var(--color-onPaper);
+	--color-navRailHover: color-mix(in srgb, transparent, var(--color-inkWell) 7%);
+	--color-navRailActive: color-mix(in srgb, transparent, var(--color-inkWell) 14%);
+
+	--color-appBar: var(--color-navRail);
+	--color-onAppBar: var(--color-onNavRail);
+
+	--helion-IconButton-splashSize: 2.5em;
+
+	--color-toggleSwitchTrackColor: #000;
+	--color-toggleSwitchThumbColor: #fff;
+}
