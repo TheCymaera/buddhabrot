@@ -186,7 +186,7 @@
 @utility helion-nav-rail-button {
 	@layer components {
 		@apply relative
-			flex flex-col items-center justify-center gap-0.5
+			flex flex-col items-center justify-center gap-1
 			
 			w-(--helion-NavRail-width)
 			h-(--helion-NavRail-width)
